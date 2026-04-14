@@ -1,1843 +1,632 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>QFPay - Card Cost Calculator</title>
-<link rel="icon" type="image/png" href="https://qfpay.global/wp-content/uploads/2023/11/cropped-qfpay-logo-32x32.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
-/* ==================================================== */
-/* 🔥 全局與排版限制 */
-/* ==================================================== */
-html, body {
-    max-width: 100vw;
-    overflow-x: hidden;
-}
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; padding-bottom: 90px; color: #333; transition: background-color 0.3s, color 0.3s; }
-    
-    button { background-color: #ffffff; color: #333333; }
-
-    .top-nav { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; color: white; padding: 10px 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; }
-    .nav-brand { display: flex; align-items: center; gap: 10px; } 
-    .nav-brand img { height: 35px; width: auto; } 
-    
-    .user-info { font-size: 14px; display: flex; align-items: center; gap: 15px; }
-    .btn-logout { background: #e53e3e; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.3s; }
-    .btn-logout:hover { background: #c53030; }
-    /* 🔥 修改密碼按鈕專用樣式 */
-    .btn-change-pw { background: #4a5568; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.3s; }
-    .btn-change-pw:hover { background: #2d3748; }
-
-    .main-layout { display: flex; max-width: 1400px; margin: 0 auto; gap: 20px; align-items: flex-start; }
-    .input-area { flex: 1.2; min-width: 0; }
-    .result-area { flex: 1; position: sticky; top: 20px; height: calc(100vh - 120px); overflow-y: auto; background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); transition: 0.3s; }
-
-    .panel, .result-card { 
-        max-width: 100%; 
-        box-sizing: border-box; 
-        overflow: hidden; 
-    }
-    .panel { background: white; padding: 25px; border-radius: 6px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #e1e4e8; transition: 0.3s; }
-    h2 { color: #2c3e50; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-top: 0; font-size: 18px; transition: 0.3s; }
-    h3 { font-size: 14px; margin-top: 25px; margin-bottom: 10px; color: #2c3e50; transition: 0.3s; }
-    
-    .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
-    .form-group { flex: 1; min-width: 200px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #4a5568; transition: 0.3s; }
-    
-    input[type="text"], input[type="password"], select, input[type="number"] { 
-        width: 100%; height: 36px; line-height: 34px; padding: 0 10px; border: 1px solid #cbd5e0; border-radius: 4px; box-sizing: border-box; font-size: 13px; outline: none; transition: 0.2s; font-family: inherit; background-color: #ffffff; color: #333333; -webkit-appearance: none;
-    }
-    input[type="number"]::-webkit-inner-spin-button, 
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type="number"] { -moz-appearance: textfield; }
-
-    input:focus, select:focus { border-color: #3182ce; box-shadow: 0 0 0 1px #3182ce; }
-    input:disabled, select:disabled { cursor: not-allowed; opacity: 0.7; }
-    
-    input.empty-field, select.empty-field { background-color: #fffaf0 !important; border-color: #f6ad55 !important; }
-
-    .update-box { background-color: #f8fafc; border-left: 4px solid #4a5568; padding: 15px; margin-bottom: 25px; border-radius: 4px; max-height: 180px; overflow-y: auto; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; transition: 0.3s;}
-    .update-version { font-weight: bold; color: #2d3748; font-size: 15px; margin-bottom: 12px; border-bottom: 2px solid #cbd5e0; padding-bottom: 8px; transition: 0.3s; }
-    .update-item { display: flex; align-items: flex-start; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 12px; line-height: 1.5; transition: 0.3s; }
-    .update-item:last-child { border-bottom: none; }
-    .update-category { color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 15px; width: 130px; text-align: center; flex-shrink: 0; }
-    .update-desc { color: #4a5568; flex: 1; transition: 0.3s; }
-
-    .alloc-box { background-color: #f8fafc; padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; gap: 40px; margin-bottom: 20px; }
-    .mcc-info-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3182ce; padding: 15px; margin-bottom: 15px; border-radius: 4px; font-size: 13px; color: #4a5568; display: none; }
-    
-    .error-text { color: #e53e3e; font-size: 12px; margin-top: 8px; display: none; font-weight: bold; }
-    
-    .table-wrapper { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; box-sizing: border-box; }
-    
-    table.dist-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; min-width: 540px; }
-    table th, table td { border: 1px solid #e2e8f0; padding: 8px 10px; vertical-align: middle; transition: 0.3s; }
-    table th { background-color: #edf2f7; color: #2d3748; text-align: center; font-weight: 600; transition: 0.3s; }
-    
-    table.dist-table th, table.dist-table td { word-break: break-word; }
-
-    table td.region-cell { font-weight: 600; text-align: center; background-color: #f8fafc; width: 15%; color: #4a5568; transition: 0.3s; }
-    table td.tier-cell { width: 60%; color: #2d3748; transition: 0.3s; }
-    table tr.section-divider td { border-bottom: 2px solid #a0aec0; }
-    table td.divider-top { border-top: 2px solid #a0aec0; }
-    table td.section-right-border { border-right: 2px solid #cbd5e0; }
-
-    th.bg-visa { background-color: #1a1f71 !important; color: #ffffff !important; border-color: #1a1f71 !important; }
-    th.bg-master { background-color: #ff5f00 !important; color: #ffffff !important; border-color: #ff5f00 !important; }
-    th.bg-up { background-color: #007d79 !important; color: #ffffff !important; border-color: #007d79 !important; }
-    th.bg-upqp { background-color: #005b57 !important; color: #ffffff !important; border-color: #005b57 !important; }
-    th.bg-weight { background-color: #4a5568 !important; color: #ffffff !important; border-color: #4a5568 !important; }
-    th.bg-higher { background-color: #2d3748 !important; color: #ffffff !important; border-color: #2d3748 !important; }
-
-    table tr.total-alloc-row td { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
-    table td.na-cell { background-color: #f7fafc; color: #a0aec0; text-align: center; font-size: 12px; border-left: 1px solid #e2e8f0; }
-
-    .input-percent-group { display: flex; align-items: center; justify-content: flex-end; }
-    .input-percent-group input { text-align: right; margin-right: 5px; width: 70px; }
-
-    .sticky-controls { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.98); border-top: 1px solid #e2e8f0; padding: 12px 40px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; z-index: 1000; gap: 15px; transition: 0.3s; }
-    .btn { padding: 12px 25px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-    .btn-reset { background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; }
-    .btn-export { background: #e2e8f0; color: #2d3748; border: 1px solid #cbd5e0; }
-    .btn-export:hover { background: #cbd5e0; }
-    .btn-save { background: #ebf8fa; color: #319795; border: 1px solid #b2f5ea; }
-    .btn-load { background: #fffaf0; color: #dd6b20; border: 1px solid #feebc8; }
-    .btn-calc { padding: 12px 45px; background-color: #2b6cb0; color: #ffffff; font-size: 16px; margin-left: 10px; }
-
-    #tables_container { display: grid; grid-template-columns: 1fr; gap: 25px; margin-top: 15px; }
-    .result-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: opacity 0.3s ease, filter 0.3s ease, background 0.3s, border-color 0.3s; }
-    .stale-result { opacity: 0.35; filter: grayscale(100%); pointer-events: none; }
-    
-    table.result-table { width: 100%; text-align: center; border-collapse: collapse; min-width: 540px; }
-    table.result-table th { background-color: #f8fafc; color: #4a5568; font-weight: 600; font-size: 11px; white-space: nowrap; transition: 0.3s; padding: 6px 2px; }
-    table.result-table td.val { color: #2d3748; font-weight: 500; font-size: 12px; white-space: nowrap; font-family: 'Consolas', 'Segoe UI', Tahoma, sans-serif; transition: opacity 0.3s ease, color 0.3s; }
-    table.result-table td.row-label { background-color: #fdfdfd; color: #4a5568; font-size: 11px; font-weight: 600; white-space: nowrap; transition: 0.3s; padding: 6px 2px; }
-
-    #toast { visibility: hidden; min-width: 250px; background-color: #333333; color: #ffffff; text-align: center; border-radius: 4px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 80px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
-    #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
-    
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1500; backdrop-filter: blur(5px); }
-    .modal-content { background: #ffffff; padding: 30px; border-radius: 8px; width: 450px; max-width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: 0.3s; display: flex; flex-direction: column; max-height: 90vh; }
-    .modal-content h3 { margin-top: 0; border-bottom: 2px solid #edf2f7; padding-bottom: 12px; font-size: 18px; color: #2d3748; transition: 0.3s; flex-shrink: 0; }
-    
-    #loginModal { display: flex; }
-    .btn-login { width: 100%; padding: 12px; background: #2b6cb0; color: #ffffff; border: none; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
-    
-    .draft-list { padding: 0; margin: 0; max-height: 400px; overflow-y: auto; }
-    .draft-group { margin-bottom: 15px; border: 1px solid #edf2f7; border-radius: 6px; overflow: hidden; transition: 0.3s; }
-    .draft-group-title { background: #f8fafc; padding: 10px 15px; font-size: 14px; font-weight: bold; color: #2d3748; border-bottom: 1px solid #edf2f7; transition: 0.3s; }
-    .draft-group-list { padding: 0; }
-    .draft-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #edf2f7; align-items: center; transition: 0.3s; background: white; }
-    .draft-item:last-child { border-bottom: none; }
-    .draft-item:hover { background-color: #f0f4f8; }
-    .draft-name { font-weight: 600; color: #2b6cb0; cursor: pointer; flex: 1; transition: 0.3s; }
-    .draft-date { font-size: 11px; color: #718096; display: block; margin-top: 4px; font-weight: normal; transition: 0.3s; }
-    .btn-delete-draft { background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.3s; }
-    .btn-close-modal { width: 100%; padding: 12px; background-color: #edf2f7; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.3s; flex-shrink: 0; }
-
-    .btn-theme-toggle { background: none; border: 1px solid rgba(255,255,255,0.3); color: #ffffff; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-    .btn-theme-toggle:hover { background: rgba(255,255,255,0.1); }
-
-    .brand-badge {
-        flex: 1;
-        text-align: center;
-        font-size: 10.5px;
-        padding: 5px 2px;
-        border-radius: 3px;
-        border: 1px solid transparent;
-        font-weight: bold;
-        transition: 0.3s;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        line-height: 1.3;
-        min-height: 24px;
-    }
-
-    .special-mcc-modal { width: 1100px; max-width: 95%; }
-    
-    .segment-cell { text-align: left; font-size: 12px; font-weight: bold; line-height: 1.3; vertical-align: middle; background-color: #f8fafc; color: #2d3748; transition: background-color 0.3s, color 0.3s; border-right: 1px solid #cbd5e0; }
-    .sp-mcc-cell { font-weight: bold; color: #2b6cb0; text-align: center; vertical-align: middle; transition: color 0.3s; }
-    .sp-desc-cell { text-align: left; font-size: 11px; line-height: 1.4; vertical-align: middle; transition: color 0.3s; }
-    .sp-check-cell { text-align: center; vertical-align: middle; transition: color 0.3s; }
-    .sp-recurring { display: inline-block; font-size: 8.5px; color: #e53e3e; font-weight: bold; line-height: 1.1; margin-top: 3px; text-align: center; transition: color 0.3s; }
-    .sp-dash { color: #cbd5e0; transition: color 0.3s; }
-
-    /* ==================================================== */
-    /* 🔥 DARK MODE */
-    /* ==================================================== */
-    body.dark-mode { background-color: #1a202c; color: #e2e8f0; }
-    body.dark-mode .top-nav { background-color: #111827; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border-bottom: 1px solid #2d3748; }
-    body.dark-mode .panel, body.dark-mode .result-area, body.dark-mode .result-card, body.dark-mode .modal-content { background-color: #2d3748; border-color: #4a5568; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-    body.dark-mode h2 { color: #f7fafc; border-bottom-color: #4a5568; }
-    body.dark-mode h3 { color: #e2e8f0; }
-    body.dark-mode label { color: #a0aec0; }
-    
-    body.dark-mode input[type="text"], body.dark-mode input[type="number"], body.dark-mode input[type="password"], body.dark-mode select { 
-        background-color: #1a202c; color: #e2e8f0; border-color: #4a5568; 
-    }
-    body.dark-mode input:focus, body.dark-mode select:focus { border-color: #63b3ed; box-shadow: 0 0 0 1px #63b3ed; }
-    
-    body.dark-mode input.empty-field, body.dark-mode select.empty-field { background-color: #451a1a !important; border-color: #fc8181 !important; }
-    
-    body.dark-mode .update-box, body.dark-mode .mcc-info-box, body.dark-mode .alloc-box { 
-        background-color: #1a202c; border-color: #4a5568; color: #e2e8f0;
-    }
-    body.dark-mode .mcc-info-box span { color: #90cdf4; } 
-    
-    body.dark-mode .update-version { color: #e2e8f0; border-bottom-color: #4a5568; }
-    body.dark-mode .update-desc { color: #cbd5e0; }
-    body.dark-mode .update-item { border-bottom-color: #4a5568; }
-    
-    body.dark-mode .modal-content p, body.dark-mode .modal-content h3 { color: #e2e8f0; border-bottom-color: #4a5568;}
-    body.dark-mode .modal-content label { color: #cbd5e0; }
-    body.dark-mode .modal-content .close-icon { color: #e2e8f0; }
-    
-    body.dark-mode table th { background-color: #2d3748; color: #e2e8f0; border-color: #4a5568; }
-    body.dark-mode table td { border-color: #4a5568; }
-    
-    body.dark-mode .segment-cell { background-color: #1a202c; color: #e2e8f0; border-right-color: #4a5568; }
-    body.dark-mode .sp-mcc-cell { color: #90cdf4; }
-    body.dark-mode .sp-recurring { color: #fc8181; }
-    body.dark-mode .sp-dash { color: #4a5568; }
-    
-    body.dark-mode .draft-group { border-color: #4a5568; }
-    body.dark-mode .draft-group-title { background-color: #1a202c; color: #e2e8f0; border-bottom-color: #4a5568; }
-    body.dark-mode .draft-item { background-color: #2d3748; border-bottom-color: #4a5568; }
-    body.dark-mode .draft-item:hover { background-color: #4a5568; }
-
-    th.bg-visa { background-color: #1a1f71 !important; color: #ffffff !important; border-color: #1a1f71 !important; }
-    th.bg-master { background-color: #ff5f00 !important; color: #ffffff !important; border-color: #ff5f00 !important; }
-    th.bg-up { background-color: #007d79 !important; color: #ffffff !important; border-color: #007d79 !important; }
-    th.bg-upqp { background-color: #005b57 !important; color: #ffffff !important; border-color: #005b57 !important; }
-    th.bg-weight { background-color: #4a5568 !important; color: #ffffff !important; border-color: #4a5568 !important; }
-    th.bg-higher { background-color: #1a202c !important; color: #ffffff !important; border-color: #1a202c !important; }
-
-    body.dark-mode table td.region-cell, body.dark-mode table td.row-label { background-color: #1a202c; color: #e2e8f0; }
-    body.dark-mode table td.tier-cell, body.dark-mode table td.val { color: #e2e8f0; }
-    body.dark-mode table td.na-cell { background-color: #1a202c; border-color: #4a5568; color: #718096; }
-    body.dark-mode table tr.total-alloc-row td { background-color: #2d3748; color: #e2e8f0; border-color: #4a5568; }
-    body.dark-mode table tr.section-divider td { border-bottom-color: #718096; }
-    body.dark-mode table td.divider-top { border-top-color: #718096; }
-    body.dark-mode table td.section-right-border { border-right-color: #718096; }
-    
-    body.dark-mode .sticky-controls { background-color: rgba(26, 32, 44, 0.98); border-top-color: #4a5568; }
-    body.dark-mode .btn-reset, body.dark-mode .btn-export, body.dark-mode .btn-close-modal { background-color: #4a5568; color: #e2e8f0; border-color: #718096; }
-    body.dark-mode .btn-export:hover, body.dark-mode .btn-reset:hover, body.dark-mode .btn-close-modal:hover { background-color: #718096; }
-    body.dark-mode .btn-save { background-color: #234e52; color: #81e6d9; border-color: #285e61; }
-    body.dark-mode .btn-load { background-color: #7b341e; color: #fbd38d; border-color: #9c4221; }
-    body.dark-mode .btn-save:hover { background-color: #285e61; }
-    body.dark-mode .btn-load:hover { background-color: #9c4221; }
-    body.dark-mode .btn-delete-draft { background-color: #742a2a; color: #fc8181; border-color: #9b2c2c; }
-
-    /* ==================================================== */
-    /* 🔥 行動裝置響應式設計 (Mobile Responsiveness) */
-    /* ==================================================== */
-    @media (max-width: 1024px) {
-        .main-layout { flex-direction: column; }
-        .input-area, .result-area { width: 100%; flex: auto; }
-        .result-area { position: relative; height: auto; top: 0; overflow-y: visible; margin-bottom: 40px; }
-    }
-
-    @media (max-width: 768px) {
-        body { padding: 10px; padding-bottom: 120px; } 
-        .top-nav { flex-direction: column; gap: 10px; align-items: flex-start; }
-        .user-info { width: 100%; justify-content: space-between; }
-        .sticky-controls { padding: 10px; gap: 8px; justify-content: space-between; }
-        .sticky-controls .btn { flex: 1 1 calc(50% - 10px); padding: 12px 10px; font-size: 13px; margin: 0; text-align: center; }
-        .sticky-controls .btn-calc { flex: 1 1 100%; margin-left: 0; font-size: 16px; margin-top: 5px; }
-
-        .special-mcc-modal {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            border-radius: 0 !important;
-            margin: 0 !important;
-            padding: 15px !important;
-            box-sizing: border-box;
-        }
-        .special-mcc-modal .table-wrapper { flex: 1; height: 100%; overflow-x: auto; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QFPay EDM Generator</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/6230/6230964.png" type="image/png">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; color: #1f2937; }
+        .container { max-width: 800px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        .modal-content { width: 95vw; padding: 20px; }
-    }
-</style>
+        /* 調整 Header 排版：Logo 與標題分行顯示，取消 Logo 修邊 */
+        .header-container { border-bottom: 2px solid #eff6ff; padding-bottom: 16px; margin-bottom: 24px; }
+        .header-logo { height: 40px; margin-bottom: 12px; object-fit: contain; display: block; }
+        h1 { font-size: 24px; margin: 0; color: #1d4ed8; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+        input[type="text"], input[type="date"], textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px; box-sizing: border-box; transition: all 0.2s; }
+        input:focus, textarea:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        textarea { height: 80px; resize: vertical; }
+        
+        .holiday-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; position: relative; transition: all 0.2s; }
+        .holiday-card h3 { margin-top: 0; font-size: 16px; color: #0f172a; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        
+        .remove-btn { position: absolute; top: 15px; right: 20px; background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .remove-btn:hover { background: #fecaca; }
+        
+        .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; background: #ffffff; padding: 16px; border-radius: 6px; border: 1px solid #f1f5f9; }
+        .date-grid h4 { grid-column: 1 / -1; margin: 0 0 8px 0; font-size: 14px; color: #3b82f6; display: flex; align-items: center; justify-content: space-between;}
+        
+        .na-toggle { display: flex; align-items: center; font-size: 13px; font-weight: normal; color: #4b5563; cursor: pointer; }
+        .na-toggle input { margin-right: 6px; cursor: pointer; }
+        
+        .btn-primary { background: #2563eb; color: white; border: none; padding: 14px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; transition: background 0.2s; }
+        .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #4b5563; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-bottom: 20px; display: inline-block; transition: background 0.2s; }
+        .btn-secondary:hover:not(:disabled) { background: #d1d5db; }
+        
+        /* 鎖定狀態樣式 */
+        input:disabled, textarea:disabled, button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #f3f4f6; }
+        
+        /* 輸出區及修改警告樣式 */
+        #outputArea { display: none; margin-top: 30px; transition: opacity 0.3s; }
+        #htmlOutput { width: 100%; height: 200px; font-family: monospace; font-size: 12px; background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+        
+        .copy-btn { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-bottom: 24px; }
+        .copy-btn:hover { background: #059669; }
+        
+        /* 預覽 iframe 樣式 */
+        .preview-container { border: 1px solid #d1d5db; border-radius: 8px; background: #e5e7eb; padding: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        iframe { width: 100%; height: 800px; border: none; background: #ffffff; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        .dirty-warning { display: none; background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 6px; border: 1px solid #f87171; margin-bottom: 16px; font-weight: 600; text-align: center; }
+        
+        /* 參數修改反灰機制 */
+        body.is-dirty .dirty-warning { display: block; }
+        body.is-dirty #htmlOutput { opacity: 0.4; }
+        body.is-dirty iframe { opacity: 0.4; filter: grayscale(50%); }
+        body.is-dirty .copy-btn { display: none; }
+        .error-border { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; }
+    </style>
 </head>
 <body>
-<div id="loginModal" class="modal-overlay">
-<div class="modal-content">
-<div style="text-align: center; margin-bottom: 15px;">
-<img src="https://qfpay.global/wp-content/uploads/2023/10/logo_black.png" alt="QFPay" style="height: 40px; width: auto; max-width: 100%;">
-</div>
-    <h3 style="text-align: center; border:none; color: #1a1f71; font-size: 22px; margin-top: 0; margin-bottom: 25px;">Card Cost Calculator</h3>
-    <div class="form-group" style="margin-bottom: 15px;">
-        <label>Username</label>
-        <input type="text" id="login_user" placeholder="Enter your username" onkeydown="if(event.key === 'Enter') attemptLogin()">
+
+<div class="container">
+    <div class="header-container">
+        <img src="https://qfpay.global/wp-content/uploads/2023/10/logo_black.png" alt="QFPay Logo" class="header-logo">
+        <h1>QFPay EDM Generator</h1>
     </div>
+    
     <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="login_pass" placeholder="Enter your password" onkeydown="if(event.key === 'Enter') attemptLogin()">
-    </div>
-    <button class="btn-login" id="btn_do_login" onclick="attemptLogin()">Log In</button>
-    <div id="login_error" class="error-text" style="text-align: center; margin-top: 10px;"></div>
-</div>
-</div>
-
-<div id="appContainer" style="display: none;">
-<div class="top-nav">
-<div class="nav-brand">
-<img src="https://lh3.googleusercontent.com/pw/AP1GczPlSaIaBw6KH0c0i8chM-aopIZPv7NrVTo3W1HwtK7c8jizmRwumzikQAdEM6JwRuh4WLfy1kIcpuY-Sd8XBOAKZIhBT1LPcKxhckgNzW4VBIediFqSJLE0suEjKeoqxzTn5TSdAGxmswiVjintBzKr=w384-h72-s-no?authuser=0">
-</div>
-<div class="user-info">
-<button class="btn-theme-toggle" id="btn_theme" onclick="toggleTheme()">🌙</button>
-👤 <span id="display_user_name">User</span>
-<button class="btn-change-pw" onclick="openChangePwModal()">🔑 Password</button>
-<button class="btn-logout" onclick="logout()">Logout</button>
-</div>
-</div>
-<div class="main-layout" id="main_layout_area">
-    <div class="input-area" id="input_form_area">
-        <div class="panel">
-            <h2>Update History</h2>
-            <div class="update-box" id="update_history_container">
-                <div style="text-align: center; color: #a0aec0; padding: 20px;">Loading latest updates...</div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>1. Basic Information</h2>
-            <div class="form-row">
-                <div class="form-group"><label>Merchant Name</label><input type="text" id="merchant_name" class="basic-info-field"></div>
-                <div class="form-group">
-                    <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        MCC
-                        <button type="button" onclick="openSpecialMccModal()" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #ebf8fa; color: #319795; border: 1px solid #b2f5ea; cursor: pointer; font-weight: bold; line-height: 1;">📋 View Full Special MCC List</button>
-                    </label>
-                    <input type="text" id="mcc" list="mcc_list" class="basic-info-field" onchange="toggleOtherMcc(); checkSpecialMcc();" oninput="checkSpecialMcc();" placeholder="Select or type MCC..." autocomplete="off">
-                    <datalist id="mcc_list"></datalist>
-                    <div style="display: flex; gap: 6px; margin-top: 8px; align-items: stretch;">
-                        <div id="badge_v" class="brand-badge" style="background: #edf2f7; color: #a0aec0; border-color: #e2e8f0;">VISA</div>
-                        <div id="badge_m" class="brand-badge" style="background: #edf2f7; color: #a0aec0; border-color: #e2e8f0;">MASTER</div>
-                        <div id="badge_u" class="brand-badge" style="background: #edf2f7; color: #a0aec0; border-color: #e2e8f0;">UNIONPAY</div>
-                    </div>
-                </div>
-                <div class="form-group" id="other_mcc_group" style="display:none;"><label>Other MCC</label>
-                    <input type="text" id="other_mcc" maxlength="4" class="basic-info-field" placeholder="4-digit code" pattern="\d{4}" oninput="checkSpecialMcc();">
-                </div>
-            </div>
-
-            <div class="mcc-info-box" id="mcc_info_box">
-                <div style="margin-bottom: 10px;">
-                    <span style="font-weight: bold; color: #2b6cb0;">📝 MCC Description:</span>
-                    <div id="mcc_desc_text" style="margin-top: 4px; line-height: 1.5;">-</div>
-                </div>
-                <div>
-                    <span style="font-weight: bold; color: #2b6cb0;">✅ Included in this MCC:</span>
-                    <div id="mcc_included_text" style="margin-top: 4px; line-height: 1.5;">-</div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group"><label>Processing Currency</label><select id="currency" class="basic-info-field"><option value="HKD" selected>HKD</option><option value="Non-HKD">Non-HKD</option></select></div>
-                <div class="form-group"><label>Average Ticket Size (HKD)</label><input type="number" min="0" id="ticket_size" class="basic-info-field" step="0.01" oninput="if(this.value < 0) this.value = ''; checkEmptyFields();" onblur="formatCurrency(this)"></div>
-                <div class="form-group"><label>Model</label><select id="model" class="basic-info-field" onchange="toggleShopify()"><option value="" selected disabled>Select Model</option><option value="Online">Online</option><option value="Offline">Offline</option></select></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Shopify</label><select id="shopify" class="basic-info-field"><option value="" selected disabled>Select</option><option value="Y">Y</option><option value="N">N</option></select></div>
-                <div class="form-group"><label>Fraudsight</label><select id="fraudsight" class="basic-info-field"><option value="Y" selected>Y</option><option value="N">N</option></select></div>
-                <div class="form-group"><label>3D Secure</label><select id="3ds" class="basic-info-field"><option value="Y" selected>Y</option><option value="N">N</option></select></div>
-                <div class="form-group"><label>Tokenisation</label><select id="token" class="basic-info-field"><option value="Y">Y</option><option value="N" selected>N</option></select></div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>2. Card Transaction Distribution</h2>
-            <div class="form-row alloc-box">
-                <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
-                    <label style="margin-bottom: 0;">Visa Overall Allocation</label>
-                    <div class="input-percent-group"><input type="number" min="0" id="visa_overall_pct" value="50" class="overall-pct" oninput="calcOverall()" onblur="fillZero(this)"> <span style="color:#718096; margin-left:3px;">%</span></div>
-                </div>
-                <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
-                    <label style="margin-bottom: 0;">Mastercard Overall Allocation</label>
-                    <div class="input-percent-group"><input type="number" min="0" id="master_overall_pct" value="50" class="overall-pct" oninput="calcOverall()" onblur="fillZero(this)"> <span style="color:#718096; margin-left:3px;">%</span></div>
-                </div>
-            </div>
-            <div id="overall_error" class="error-text" style="margin-top: -10px; margin-bottom: 15px;">⚠️ The sum of Visa and Mastercard allocations must be exactly 100%!</div>
-
-            <div class="table-wrapper">
-                <table class="dist-table">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" style="width: 12%;">Region</th>
-                            <th rowspan="2" style="width: 40%;">Card Tier</th>
-                            <th colspan="3" style="padding: 5px; border-bottom: 1px solid #cbd5e0;">Allocation (%)</th>
-                        </tr>
-                        <tr>
-                            <th class="bg-visa" style="width: 16%;">Visa</th>
-                            <th class="bg-master" style="width: 16%;">Mastercard</th>
-                            <th class="bg-up" style="width: 16%;">UnionPay</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td rowspan="3" class="region-cell">Local Card</td>
-                            <td class="tier-cell">Prepaid Card, Debit Card, Electron, Classic/Gold Credit</td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        <tr>
-                            <td class="tier-cell">Premium (Platinum)</td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        <tr class="section-divider">
-                            <td class="tier-cell" style="padding-top: 10px; padding-bottom: 10px;">
-                                Super Premium/Corporate (Signature, Infinite)<br>
-                                <span style="font-size: 10.5px; color: #718096; font-weight: 600;">* UnionPay: Diamond Credit</span>
-                            </td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        
-                        <tr>
-                            <td rowspan="4" class="region-cell">Non-HK Card</td>
-                            <td class="tier-cell">Prepaid Card, Debit Card, Electron, Classic/Gold Credit</td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        <tr>
-                            <td class="tier-cell">Premium (Platinum)</td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        <tr>
-                            <td class="tier-cell" style="padding-top: 10px; padding-bottom: 10px;">
-                                Super Premium/Corporate (Signature, Infinite)<br>
-                                <span style="font-size: 10.5px; color: #718096; font-weight: 600;">* UnionPay: Diamond Credit</span>
-                            </td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="u-pct" value="0" oninput="calcUP()" onblur="fillZero(this)"></div></td>
-                        </tr>
-                        <tr class="section-divider">
-                            <td class="tier-cell">Ultra-High Net Worth (Elite)</td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="v-pct" value="0" oninput="calcVisa()" onblur="fillZero(this)"></div></td>
-                            <td><div class="input-percent-group"><input type="number" min="0" class="m-pct" value="0" oninput="calcMaster()" onblur="fillZero(this)"></div></td>
-                            <td class="na-cell">N/A</td>
-                        </tr>
-                        
-                        <tr class="total-alloc-row">
-                            <td colspan="2" style="text-align: right; padding-right: 15px; padding-top: 12px; padding-bottom: 12px;">Total Allocation :</td>
-                            <td style="text-align: center;"><span id="visa_total">0 %</span><div id="visa_error" class="error-text" style="margin:4px 0 0 0;">⚠️ Must be 100%</div></td>
-                            <td style="text-align: center;"><span id="master_total">0 %</span><div id="master_error" class="error-text" style="margin:4px 0 0 0;">⚠️ Must be 100%</div></td>
-                            <td style="text-align: center;"><span id="up_total">0 %</span><div id="up_error" class="error-text" style="margin:4px 0 0 0;">⚠️ Must be 100%</div></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <label>Hero Image URL (頂部橫幅圖片)</label>
+        <input type="text" id="imgUrl" placeholder="e.g. https://via.placeholder.com/600x200/..." value="" oninput="markDirty(); removeError(this);">
     </div>
 
-    <div class="result-area">
-        <h2>Projected Cost Calculation</h2>
+    <div class="form-group">
+        <label>Subject Holiday Name (英文標題假期名稱)</label>
+        <input type="text" id="subEn" placeholder="e.g. National Day & Chung Yeung Festival" value="" oninput="markDirty(); removeError(this);">
+        <small style="color: #6b7280; font-size: 12px;">※ 系統會自動加上 "Suspending Settlement During"</small>
+    </div>
+    
+    <div class="form-group">
+        <label>Subject Holiday Name (中文標題假期名稱)</label>
+        <input type="text" id="subZh" placeholder="e.g. 國慶日及重陽節假期" value="" oninput="markDirty(); removeError(this);">
+        <small style="color: #6b7280; font-size: 12px;">※ 系統會自動加上 "暫停出款通知"</small>
+    </div>
+
+    <div class="form-group">
+        <label>Content (英文內容)</label>
+        <textarea id="contentEn" oninput="markDirty(); removeError(this);">Settlement services will be temporarily suspended during the upcoming public holidays. The specific arrangements are as follows:</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Content (中文內容)</label>
+        <textarea id="contentZh" oninput="markDirty(); removeError(this);">受即將到來的公眾假期影響，結算服務將暫停，具體安排如下：</textarea>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #e5e7eb; margin: 30px 0;">
+
+    <div id="holidaysContainer">
+        </div>
+
+    <button class="btn-secondary" id="btnAddHoliday" onclick="addHoliday()">+ 新增假期 (Add Holiday)</button>
+    
+    <button class="btn-primary" id="btnGenerate" onclick="generateHTML()">✨ 生成 HTML 代碼 (Generate HTML)</button>
+
+    <div id="outputArea">
+        <div class="dirty-warning">⚠️ 參數已修改，請重新點擊上方「生成 HTML 代碼」！</div>
+        <h2 style="margin-top: 0; color: #059669;">✅ 生成成功！(Generated successfully)</h2>
         
-        <div id="tables_container" class="result-card stale-result">
-            <div class="table-wrapper" style="margin-bottom: 0; padding: 20px;">
-                <div style="min-width: 540px; display: flex; flex-direction: column; gap: 25px;">
-                    
-                    <table class="result-table" style="table-layout: fixed;">
-                        <colgroup>
-                            <col style="width: 10%;">
-                            <col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;">
-                            <col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;">
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th rowspan="2" style="vertical-align: middle;">Result</th>
-                                <th colspan="3" class="bg-visa section-right-border">Visa</th>
-                                <th colspan="3" class="bg-master">Mastercard</th>
-                            </tr>
-                            <tr>
-                                <th>Local</th><th>Int'l</th><th class="section-right-border">Combined</th>
-                                <th>Local</th><th>Int'l</th><th>Combined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="row-label">%</td>
-                                <td class="val" id="visa_local_pct">-</td><td class="val" id="visa_int_pct">-</td><td class="val section-right-border" id="visa_cmb_pct">-</td>
-                                <td class="val" id="master_local_pct">-</td><td class="val" id="master_int_pct">-</td><td class="val" id="master_cmb_pct">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label">FIX</td>
-                                <td class="val" id="visa_local_fix">-</td><td class="val" id="visa_int_fix">-</td><td class="val section-right-border" id="visa_cmb_fix">-</td>
-                                <td class="val" id="master_local_fix">-</td><td class="val" id="master_int_fix">-</td><td class="val" id="master_cmb_fix">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label divider-top" style="line-height: 1.1; padding: 4px 2px; font-size: 10.5px;">Cover FIX<br>(%)</td>
-                                <td class="val divider-top" id="visa_local_cvr">-</td>
-                                <td class="val divider-top" id="visa_int_cvr">-</td>
-                                <td class="val section-right-border divider-top" id="visa_cmb_cvr">-</td>
-                                <td class="val divider-top" id="master_local_cvr">-</td>
-                                <td class="val divider-top" id="master_int_cvr">-</td>
-                                <td class="val divider-top" id="master_cmb_cvr">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table class="result-table" style="table-layout: fixed;">
-                        <colgroup>
-                            <col style="width: 10%;">
-                            <col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;">
-                            <col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;">
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th rowspan="2" style="vertical-align: middle;">Result</th>
-                                <th colspan="3" class="bg-weight section-right-border">Weighted Average (V/M)</th>
-                                <th colspan="3" class="bg-higher">Whichever is Higher (V/M)</th>
-                            </tr>
-                            <tr>
-                                <th>Local</th><th>Int'l</th><th class="section-right-border">Combined</th>
-                                <th>Local</th><th>Int'l</th><th>Combined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="row-label">%</td>
-                                <td class="val" id="weighted_local_pct">-</td><td class="val" id="weighted_int_pct">-</td><td class="val section-right-border" id="weighted_cmb_pct">-</td>
-                                <td class="val" id="higher_local_pct">-</td><td class="val" id="higher_int_pct">-</td><td class="val" id="higher_cmb_pct">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label">FIX</td>
-                                <td class="val" id="weighted_local_fix">-</td><td class="val" id="weighted_int_fix">-</td><td class="val section-right-border" id="weighted_cmb_fix">-</td>
-                                <td class="val" id="higher_local_fix">-</td><td class="val" id="higher_int_fix">-</td><td class="val" id="higher_cmb_fix">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label divider-top" style="line-height: 1.1; padding: 4px 2px; font-size: 10.5px;">Cover FIX<br>(%)</td>
-                                <td class="val divider-top" id="weighted_local_cvr">-</td>
-                                <td class="val divider-top" id="weighted_int_cvr">-</td>
-                                <td class="val section-right-border divider-top" id="weighted_cmb_cvr">-</td>
-                                <td class="val divider-top" id="higher_local_cvr">-</td>
-                                <td class="val divider-top" id="higher_int_cvr">-</td>
-                                <td class="val divider-top" id="higher_cmb_cvr">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table class="result-table" style="table-layout: fixed;">
-                        <colgroup>
-                            <col style="width: 10%;">
-                            <col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;">
-                            <col style="width: 11.25%;"><col style="width: 11.25%;"><col style="width: 11.25%;"><col style="width: 11.25%;">
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th rowspan="2" style="vertical-align: middle; font-size: 11px;">Result</th>
-                                <th colspan="3" class="bg-up section-right-border" style="font-size: 11px;">UnionPay</th>
-                                <th colspan="4" class="bg-upqp" style="font-size: 11px;">UnionPay QuickPass</th>
-                            </tr>
-                            <tr>
-                                <th style="font-size: 11px;">Local</th><th style="font-size: 11px;">Int'l</th><th class="section-right-border" style="font-size: 11px;">Combined</th>
-                                <th style="font-size: 11px; line-height: 1.1; padding: 4px 2px;">Local<br><span style="font-size:9.5px; font-weight:normal;">MPQR</span></th>
-                                <th style="font-size: 11px; line-height: 1.1; padding: 4px 2px;">Local<br><span style="font-size:9.5px; font-weight:normal;">CPQR</span></th>
-                                <th style="font-size: 11px;">Int'l</th><th style="font-size: 11px;">Combined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="row-label">%</td>
-                                <td class="val" id="up_local_pct">-</td><td class="val" id="up_int_pct">-</td><td class="val section-right-border" id="up_cmb_pct">-</td>
-                                <td class="val" id="upqp_local_mpqr_pct">-</td><td class="val" id="upqp_local_cpqr_pct">-</td><td class="val" id="upqp_int_pct">-</td><td class="val" id="upqp_cmb_pct">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label">FIX</td>
-                                <td class="val" id="up_local_fix">-</td><td class="val" id="up_int_fix">-</td><td class="val section-right-border" id="up_cmb_fix">-</td>
-                                <td class="val" id="upqp_local_mpqr_fix">-</td><td class="val" id="upqp_local_cpqr_fix">-</td><td class="val" id="upqp_int_fix">-</td><td class="val" id="upqp_cmb_fix">-</td>
-                            </tr>
-                            <tr>
-                                <td class="row-label divider-top" style="line-height: 1.1; padding: 4px 2px; font-size: 10.5px;">Cover FIX<br>(%)</td>
-                                <td class="val divider-top" id="up_local_cvr">-</td>
-                                <td class="val divider-top" id="up_int_cvr">-</td>
-                                <td class="val section-right-border divider-top" id="up_cmb_cvr">-</td>
-                                <td class="val divider-top" id="upqp_local_mpqr_cvr">-</td>
-                                <td class="val divider-top" id="upqp_local_cpqr_cvr">-</td>
-                                <td class="val divider-top" id="upqp_int_cvr">-</td>
-                                <td class="val divider-top" id="upqp_cmb_cvr">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <h3>💻 HTML 代碼</h3>
+        <textarea id="htmlOutput" readonly></textarea>
+        <button class="copy-btn" onclick="copyHTML()">📋 一鍵複製代碼 (Copy HTML)</button>
         
-    </div>
-</div>
-
-<div class="sticky-controls">
-    <button class="btn btn-reset" id="btn_reset" onclick="resetForm()">Reset</button>
-    <button class="btn btn-export" id="btn_export" onclick="exportToImage()">📷 Export Image</button>
-    <button class="btn btn-load" id="btn_cloud_load" onclick="openLoadModal()">☁️ Load from Cloud</button>
-    <button class="btn btn-save" id="btn_cloud_save" onclick="saveRecord()">☁️ Save to Cloud</button>
-    <button class="btn btn-calc" id="btn_calc" onclick="submitCalculation()">Calculate</button>
-</div>
-</div>
-
-<div id="changePwModal" class="modal-overlay">
-    <div class="modal-content" style="width: 350px;">
-        <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            🔑 Change Password
-            <button onclick="closeChangePwModal()" style="background: none; border: none; font-size: 16px; cursor: pointer;" class="close-icon">✖</button>
-        </h3>
-        <div class="form-group" style="margin-bottom: 10px;">
-            <label>Current Password</label>
-            <input type="password" id="cpw_old" placeholder="Enter current password">
-        </div>
-        <div class="form-group" style="margin-bottom: 10px;">
-            <label>New Password</label>
-            <input type="password" id="cpw_new" placeholder="Enter new password">
-        </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label>Confirm New Password</label>
-            <input type="password" id="cpw_confirm" placeholder="Confirm new password" onkeydown="if(event.key === 'Enter') submitChangePw()">
-        </div>
-        <button class="btn-login" id="btn_do_change_pw" onclick="submitChangePw()">Update Password</button>
-        <div id="cpw_error" class="error-text" style="text-align: center; margin-top: 10px;"></div>
-    </div>
-</div>
-
-<div id="loadModal" class="modal-overlay">
-    <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
-        <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;">
-            ☁️ Cloud Saved Records 
-            <button onclick="closeLoadModal()" style="background: none; border: none; cursor: pointer;" class="close-icon">✖</button>
-        </h3>
-        <input type="text" id="record_search" placeholder="🔍 Search by merchant or record name..." style="margin-bottom: 15px; width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #cbd5e0; flex-shrink: 0;" onkeyup="filterRecords()">
-        <div id="draftList" class="draft-list" style="flex: 1; overflow-y: auto;">
-            <div style="text-align:center; padding: 20px; color:#a0aec0;">Loading records from cloud... ⏳</div>
-        </div>
-        <button class="btn-close-modal" id="btn_close_load" onclick="closeLoadModal()" style="flex-shrink: 0; margin-top: 15px;">Close</button>
-    </div>
-</div>
-
-<div id="specialMccModal" class="modal-overlay">
-    <div class="modal-content special-mcc-modal">
-        <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            📋 Special MCC List 
-            <button onclick="closeSpecialMccModal()" style="background: none; border: none; font-size: 16px; cursor: pointer;" class="close-icon">✖</button>
-        </h3>
-        <input type="text" id="special_mcc_search_input" placeholder="🔍 Search by MCC, segment, name, or industry..." style="margin-bottom: 15px; width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #cbd5e0; flex-shrink: 0;" onkeyup="renderSpecialMccTable(this.value)">
-        <div class="table-wrapper" style="max-height: 60vh; overflow-y: auto; flex: 1;">
-            <table class="dist-table" id="special_mcc_table" style="width: 100%; min-width: 1100px;">
-                <thead style="position: sticky; top: 0; z-index: 10;">
-                    <tr>
-                        <th rowspan="2" style="width: 12%; text-align: left;">Segment</th>
-                        <th rowspan="2" style="width: 5%;">MCC</th>
-                        <th rowspan="2" style="width: 12%; text-align: left;">Name</th>
-                        <th rowspan="2" style="width: 18%; text-align: left;">Description</th>
-                        <th rowspan="2" style="width: 11%; text-align: left;">Industry</th>
-                        <th colspan="2" class="bg-visa" style="width: 14%;">Visa</th>
-                        <th colspan="2" class="bg-master" style="width: 14%;">Mastercard</th>
-                        <th colspan="2" class="bg-up" style="width: 14%;">UnionPay</th>
-                    </tr>
-                    <tr>
-                        <th class="bg-visa" style="font-size:10px; width: 7%; padding: 4px;">Online</th>
-                        <th class="bg-visa" style="font-size:10px; width: 7%; padding: 4px;">Offline</th>
-                        <th class="bg-master" style="font-size:10px; width: 7%; padding: 4px;">Online</th>
-                        <th class="bg-master" style="font-size:10px; width: 7%; padding: 4px;">Offline</th>
-                        <th class="bg-up" style="font-size:10px; width: 7%; padding: 4px;">Local</th>
-                        <th class="bg-up" style="font-size:10px; width: 7%; padding: 4px;">Int'l</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="11" style="text-align:center; color:#a0aec0;">Loading data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <button class="btn-close-modal" onclick="closeSpecialMccModal()">Close</button>
-    </div>
-</div>
-
-<div id="saveConflictModal" class="modal-overlay">
-    <div class="modal-content" style="text-align: center; width: 400px;">
-        <h3 style="color: #d69e2e; border: none; font-size: 20px;">⚠️ Record Already Exists</h3>
-        <p style="color: #4a5568; font-size: 14px; margin-bottom: 20px;">
-            The record <strong id="conflict_record_name"></strong> already exists. What would you like to do?
-        </p>
-        <div id="new_copy_input_area" style="display: none; margin-bottom: 15px; text-align: left;">
-            <label style="font-size: 12px; color: #718096;">Edit name for new copy:</label>
-            <input type="text" id="conflict_new_name" style="width: 100%; margin-top: 5px;">
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: center;" id="conflict_buttons_area">
-            <button class="btn" style="background-color: #edf2f7; color: #4a5568;" id="btn_modal_cancel" onclick="closeSaveConflict()">Cancel</button>
-            <button class="btn" style="background-color: #3182ce; color: #ffffff;" id="btn_modal_new" onclick="triggerSaveNewCopy()">Save as New Copy</button>
-            <button class="btn" style="background-color: #e53e3e; color: #ffffff;" id="btn_modal_rep" onclick="triggerReplace()">Replace Existing</button>
-        </div>
-        <div style="display: none; gap: 10px; justify-content: center;" id="confirm_new_copy_area">
-            <button class="btn" style="background-color: #edf2f7; color: #4a5568;" id="btn_modal_cancel2" onclick="closeSaveConflict()">Cancel</button>
-            <button class="btn" style="background-color: #38a169; color: #ffffff;" id="btn_modal_save_copy" onclick="executeFinalSave('new')">Save Copy</button>
+        <hr style="border:0; border-top:1px solid #e5e7eb; margin: 20px 0;">
+        
+        <h3>👀 郵件預覽 (Email Preview)</h3>
+        <p style="font-size: 13px; color: #6b7280; margin-top: -10px;">此為 1:1 實時渲染效果。若排版走位，請確認輸入內容是否過長。</p>
+        <div class="preview-container">
+            <iframe id="previewFrame" title="EDM Preview"></iframe>
         </div>
     </div>
 </div>
-
-<div id="toast">Message goes here</div>
 
 <script>
-const API_URL = "https://fayzdigpxabjfoygllmw.supabase.co/functions/v1/calculate-cost";
-// 🚨 請把以下這串換回你的真實 Anon Key (目前已被我取代為 YOUR_REAL_SUPABASE_ANON_KEY 保護) 🚨
-const SUPABASE_ANON_KEY = "YOUR_REAL_SUPABASE_ANON_KEY"; 
-
-const supabaseHeaders = {
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-};
-
-let currentUser = null;
-let specialMccs = { v: [], m: [], u: [] };
-let mccDetailsMap = {};
-let idleTime = 0; 
-let specialMccDetailedList = []; 
-
-function applyStoredTheme() {
-    const savedTheme = localStorage.getItem('qfpay_theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('btn_theme').innerText = '☀️';
-    }
-}
-
-function toggleTheme() {
-    const body = document.body;
-    const btn = document.getElementById('btn_theme');
-    if (body.classList.contains('dark-mode')) {
-        body.classList.remove('dark-mode');
-        btn.innerText = '🌙';
-        localStorage.setItem('qfpay_theme', 'light');
-        calcVisa(); calcMaster(); calcUP();
-    } else {
-        body.classList.add('dark-mode');
-        btn.innerText = '☀️';
-        localStorage.setItem('qfpay_theme', 'dark');
-        calcVisa(); calcMaster(); calcUP();
-    }
-}
-
-function setActionState(isLoading, targetBtnId, loadingText) {
-    const buttons = document.querySelectorAll('.sticky-controls .btn');
-    buttons.forEach(btn => {
-        btn.disabled = isLoading;
-        btn.style.opacity = isLoading ? '0.5' : '1';
-        btn.style.cursor = isLoading ? 'not-allowed' : 'pointer';
-    });
+    let holidayCount = 0;
     
-    const inputs = document.querySelectorAll('#input_form_area input, #input_form_area select');
-    inputs.forEach(el => { el.disabled = isLoading; });
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const dayNamesEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayNamesZh = ["日", "一", "二", "三", "四", "五", "六"];
 
-    if (isLoading && targetBtnId) {
-        const mainBtn = document.getElementById(targetBtnId);
-        if (mainBtn) mainBtn.innerText = loadingText;
-    } else if (!isLoading) {
-        document.getElementById('btn_calc').innerText = "Calculate";
-        document.getElementById('btn_cloud_save').innerText = "☁️ Save to Cloud";
-        document.getElementById('btn_cloud_load').innerText = "☁️ Load from Cloud";
-        document.getElementById('btn_export').innerText = "📷 Export Image";
-        toggleShopify(); 
-    }
-}
-
-function setModalButtonsState(disabled) {
-    document.querySelectorAll('#saveConflictModal button').forEach(btn => {
-        btn.disabled = disabled;
-        btn.style.opacity = disabled ? '0.5' : '1';
-        btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
-    });
-}
-
-const markResultStale = () => { document.getElementById('tables_container').classList.add('stale-result'); };
-
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll('#input_form_area input, #input_form_area select').forEach(el => {
-        el.addEventListener('input', markResultStale);
-        el.addEventListener('change', markResultStale);
-    });
-
-    document.querySelectorAll('input[type="number"], #mcc').forEach(el => {
-        el.addEventListener('focus', function() {
-            this.select();
-        });
-    });
-
-    document.getElementById('mcc').addEventListener('change', function() {
-        let val = this.value.trim();
-        if (!val) { checkSpecialMcc(); return; }
+    function formatDate(dateStr) {
+        if (!dateStr) return ""; 
+        const parts = dateStr.split('-');
+        const d = new Date(parts[0], parts[1] - 1, parts[2]); 
         
-        let options = Array.from(document.getElementById('mcc_list').options).map(opt => opt.value);
-        if (options.includes(val)) return; 
+        const date = d.getDate();
+        const month = monthNames[d.getMonth()];
+        const year = d.getFullYear();
+        const dayEn = dayNamesEn[d.getDay()];
+        const dayZh = dayNamesZh[d.getDay()];
         
-        if (val.match(/^\d{4}/)) {
-            let matchCode = val.substring(0,4);
-            let match = options.find(opt => opt.startsWith(matchCode));
-            if (match) {
-                this.value = match;
-                checkSpecialMcc(); toggleOtherMcc(); checkEmptyFields();
-                return;
-            }
-        }
-        
-        let lowerVal = val.toLowerCase();
-        let textMatch = options.find(opt => opt.toLowerCase().includes(lowerVal));
-        if (textMatch && val.length >= 3) { 
-            this.value = textMatch;
-            checkSpecialMcc(); toggleOtherMcc(); checkEmptyFields();
-            return;
-        }
-        
-        if (val !== "Loading MCCs...") {
-            alert('⚠️ Please select a valid option from the MCC dropdown list.');
-            this.value = '';
-            checkSpecialMcc(); toggleOtherMcc(); checkEmptyFields();
-        }
-    });
-
-    const syncScrollTables = document.querySelectorAll('.sync-scroll');
-    syncScrollTables.forEach(table => {
-        table.addEventListener('scroll', (e) => {
-            const activeTable = e.target;
-            syncScrollTables.forEach(otherTable => {
-                if (otherTable !== activeTable && otherTable.scrollLeft !== activeTable.scrollLeft) {
-                    otherTable.scrollLeft = activeTable.scrollLeft;
-                }
-            });
-        });
-    });
-});
-
-// 🔥 全域監聽 ESC 鍵關閉任何開啟的彈窗
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeSpecialMccModal();
-        closeLoadModal();
-        closeSaveConflict();
-        closeChangePwModal(); // 新增
-        return;
-    }
-    
-    if (!currentUser || document.getElementById('loginModal').style.display === 'flex') return;
-
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault(); 
-        saveRecord();
-    }
-    
-    if (e.key === 'Enter') {
-        let activeEl = document.activeElement;
-        if (activeEl.tagName === 'BUTTON' || 
-            activeEl.id === 'record_search' || 
-            activeEl.id === 'conflict_new_name' || 
-            activeEl.id === 'mcc' ||
-            activeEl.id === 'special_mcc_search_input' ||
-            activeEl.id === 'cpw_old' || activeEl.id === 'cpw_new' || activeEl.id === 'cpw_confirm') {
-            return;
-        }
-        e.preventDefault();
-        submitCalculation();
-    }
-});
-
-const resetIdleTimer = () => { idleTime = 0; };
-
-window.onload = () => {
-    const savedUser = sessionStorage.getItem('calcCurrentUser');
-    const loginTime = sessionStorage.getItem('calcLoginTime');
-    
-    if (savedUser && loginTime) {
-        if (Date.now() - loginTime < 43200000) {
-            currentUser = savedUser;
-            document.getElementById('display_user_name').innerText = currentUser;
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            
-            applyStoredTheme();
-
-            fetchMccs();
-            fetchUpdates(); 
-            
-            setInterval(() => {
-                idleTime++;
-                if (idleTime >= 240 && currentUser) { 
-                    alert("Session expired due to inactivity (4 hours). For security, you have been logged out.");
-                    logout();
-                }
-            }, 60000); 
-            
-            document.addEventListener('mousemove', resetIdleTimer);
-            document.addEventListener('keypress', resetIdleTimer);
-        } else {
-            sessionStorage.clear();
-        }
-    }
-    toggleShopify();
-};
-
-// 🔥 新增：打開與關閉「修改密碼」彈窗，及送出邏輯
-function openChangePwModal() {
-    document.getElementById('cpw_old').value = '';
-    document.getElementById('cpw_new').value = '';
-    document.getElementById('cpw_confirm').value = '';
-    document.getElementById('cpw_error').style.display = 'none';
-    document.getElementById('changePwModal').style.display = 'flex';
-}
-
-function closeChangePwModal() {
-    document.getElementById('changePwModal').style.display = 'none';
-}
-
-function submitChangePw() {
-    const oldPw = document.getElementById('cpw_old').value.trim();
-    const newPw = document.getElementById('cpw_new').value.trim();
-    const confPw = document.getElementById('cpw_confirm').value.trim();
-    const errObj = document.getElementById('cpw_error');
-    const btn = document.getElementById('btn_do_change_pw');
-
-    if(!oldPw || !newPw || !confPw) { errObj.innerText = "Please fill in all fields."; errObj.style.display = 'block'; return; }
-    if(newPw !== confPw) { errObj.innerText = "New passwords do not match."; errObj.style.display = 'block'; return; }
-    if(newPw.length < 6) { errObj.innerText = "New password must be at least 6 characters."; errObj.style.display = 'block'; return; }
-
-    btn.innerText = "Updating...";
-    btn.disabled = true; errObj.style.display = 'none';
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "change_password", username: currentUser, currentPassword: oldPw, newPassword: newPw })
-    }).then(r => r.json()).then(res => {
-        btn.innerText = "Update Password";
-        btn.disabled = false;
-        if(res.status === "success") {
-            closeChangePwModal();
-            showToast("🔑 Password updated successfully!", "#38a169");
-        } else {
-            errObj.innerText = res.message || "Failed to update password."; errObj.style.display = 'block';
-        }
-    }).catch(e => {
-        btn.innerText = "Update Password";
-        btn.disabled = false;
-        errObj.innerText = "Network error."; errObj.style.display = 'block';
-    });
-}
-
-function exportToImage() {
-    if (document.getElementById('tables_container').classList.contains('stale-result')) {
-        if(!confirm("⚠️ Note: The current results may not be calculated or have changed. Are you sure you want to export?")) return;
+        return `${date} ${month} ${year} (${dayEn} / 星期${dayZh})`;
     }
 
-    setActionState(true, 'btn_export', 'Exporting...');
-    
-    const appContainer = document.getElementById('appContainer');
-    const controls = document.querySelector('.sticky-controls');
-    controls.style.display = 'none';
-
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
-    const originalViewport = viewportMeta.content;
-    viewportMeta.content = "width=1400, initial-scale=1.0";
-
-    const wrappers = document.querySelectorAll('.table-wrapper');
-    wrappers.forEach(w => w.style.overflowX = 'visible');
-
-    const panels = document.querySelectorAll('.panel, .result-card');
-    panels.forEach(p => p.style.overflow = 'visible');
-
-    const mccInfoBox = document.getElementById('mcc_info_box');
-    const origMccInfoDisplay = mccInfoBox.style.display;
-    mccInfoBox.style.display = 'none';
-
-    const updatePanel = document.getElementById('update_history_container').closest('.panel');
-    const origPanelDisplay = updatePanel.innerHTML; 
-    const origPadding = updatePanel.style.padding;
-
-    const firstVersionEl = document.querySelector('.update-version');
-    const latestVersionText = firstVersionEl ? firstVersionEl.innerText : 'Version ID: Unknown';
-    const verMatch = latestVersionText.match(/\d+/);
-    const verNumber = verMatch ? verMatch[0] : 'Unknown';
-
-    updatePanel.innerHTML = `
-        <h2 style="border-bottom:none; padding-bottom:0; margin-bottom:5px; font-size:16px;">System Info</h2>
-        <div style="color: #718096; font-size: 13px; font-weight: bold;">${latestVersionText}</div>
-    `;
-    updatePanel.style.padding = '15px 25px';
-
-    setTimeout(() => {
-        html2canvas(appContainer, { 
-            scale: 2, 
-            backgroundColor: document.body.classList.contains('dark-mode') ? '#1a202c' : '#f4f6f9', 
-            useCORS: true,
-            windowWidth: 1400 
-        }).then(canvas => {
-            viewportMeta.content = originalViewport;
-            controls.style.display = 'flex';
-            
-            wrappers.forEach(w => w.style.overflowX = 'auto');
-            panels.forEach(p => p.style.overflow = 'hidden');
-            
-            updatePanel.innerHTML = origPanelDisplay;
-            updatePanel.style.padding = origPadding;
-            mccInfoBox.style.display = origMccInfoDisplay;
-
-            const mName = document.getElementById('merchant_name').value.trim() || 'Merchant';
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-            
-            const link = document.createElement('a');
-            link.download = `QFCCL_${mName}_${dateStr}_ver${verNumber}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            setActionState(false);
-            showToast("📷 Image generated!", "#38a169");
-            
-            window.scrollTo(0, 0);
-        }).catch(err => {
-            viewportMeta.content = originalViewport;
-            controls.style.display = 'flex';
-            wrappers.forEach(w => w.style.overflowX = 'auto');
-            panels.forEach(p => p.style.overflow = 'hidden');
-            updatePanel.innerHTML = origPanelDisplay;
-            updatePanel.style.padding = origPadding;
-            mccInfoBox.style.display = origMccInfoDisplay;
-            
-            setActionState(false);
-            alert("Export failed. Please try again later.\n" + err.message);
-        });
-    }, 800); 
-}
-
-function fetchUpdates() {
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "get_updates" })
-    }).then(r => r.json()).then(res => {
-        if(res.status === "success") {
-            const container = document.getElementById('update_history_container');
-            container.innerHTML = '';
-            if(res.data.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 20px;">No recent updates.</div>';
-                return;
-            }
-            
-            let updatesData = res.data.reverse();
-
-            updatesData.forEach((group, index) => {
-                let marginTop = index > 0 ? '25px' : '0';
-                let html = `<div class="update-version" style="margin-top: ${marginTop};">Version ID: ${group.version}</div>`;
-                
-                group.items.forEach(item => {
-                    let color = "#718096"; 
-                    let cat = item.category.toLowerCase();
-                    if(cat.includes('ui') || cat.includes('feature')) color = "#3182ce"; 
-                    else if(cat.includes('wallet') || cat.includes('new')) color = "#38a169"; 
-                    else if(cat.includes('rate') || cat.includes('cost') || cat.includes('bug')) color = "#e53e3e"; 
-
-                    html += `<div class="update-item"><span class="update-category" style="background-color: ${color};">${item.category}</span><span class="update-desc">${item.desc}</span></div>`;
-                });
-                container.innerHTML += html;
-            });
+    function markDirty() {
+        const outputArea = document.getElementById('outputArea');
+        if (outputArea.style.display === 'block') {
+            document.body.classList.add('is-dirty');
         }
-    }).catch(e => console.log("Failed to load updates"));
-}
-
-function fetchMccs() {
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "get_mccs" })
-    }).then(r => r.json()).then(res => {
-        if(res.status === "success") {
-            const datalist = document.getElementById('mcc_list');
-            datalist.innerHTML = '';
-            
-            const othersOpt = document.createElement('option');
-            othersOpt.value = "Others (not special MCC)";
-            datalist.appendChild(othersOpt);
-
-            let cleanedMccs = res.data.map(mcc => {
-                let str = mcc.toString();
-                let match = str.match(/\d.*/);
-                return match ? match[0].trim() : str.trim();
-            });
-
-            cleanedMccs = cleanedMccs.filter(mcc => !mcc.toLowerCase().includes("others") && mcc !== "");
-
-            cleanedMccs.sort((a, b) => {
-                let numA = parseInt(a.match(/^\d+/)) || 0; 
-                let numB = parseInt(b.match(/^\d+/)) || 0;
-                return numA - numB;
-            });
-
-            cleanedMccs.forEach(mcc => {
-                const opt = document.createElement('option');
-                opt.value = mcc;
-                datalist.appendChild(opt);
-            });
-
-            specialMccs.v = res.vSpecial || [];
-            specialMccs.m = res.mSpecial || [];
-            specialMccs.u = res.cupSpecial || [];
-            mccDetailsMap = res.mccDetails || {}; 
-            
-            specialMccDetailedList = res.detailedList || [];
-            renderSpecialMccTable();
-        }
-    }).catch(e => console.log("Failed to load MCCs"));
-}
-
-function openSpecialMccModal() {
-    document.getElementById('special_mcc_search_input').value = '';
-    renderSpecialMccTable(); // Reset filter when opening
-    document.getElementById('specialMccModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden'; 
-    document.getElementById('special_mcc_search_input').focus();
-}
-
-function closeSpecialMccModal() {
-    document.getElementById('specialMccModal').style.display = 'none';
-    document.body.style.overflow = 'auto'; 
-}
-
-function renderSpecialMccTable(searchQuery = '') {
-    const tbody = document.querySelector('#special_mcc_table tbody');
-    tbody.innerHTML = '';
-    
-    if (specialMccDetailedList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#a0aec0; padding:20px;">No detailed data available yet. Backend update required.</td></tr>';
-        return;
     }
 
-    let filteredList = specialMccDetailedList;
-    if (searchQuery.trim() !== '') {
-        const query = searchQuery.toLowerCase();
-        filteredList = specialMccDetailedList.filter(item => {
-            return (item.mcc || "").toLowerCase().includes(query) ||
-                   (item.segment || "").toLowerCase().includes(query) ||
-                   (item.name || "").toLowerCase().includes(query) ||
-                   (item.desc || "").toLowerCase().includes(query) ||
-                   (item.industry || "").toLowerCase().includes(query);
-        });
+    function removeError(element) {
+        element.classList.remove('error-border');
     }
 
-    if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#e53e3e; padding:20px;">No matching MCC found.</td></tr>';
-        return;
-    }
-
-    let sortedList = [...filteredList].sort((a, b) => {
-        let segA = (a.segment || "").toLowerCase();
-        let segB = (b.segment || "").toLowerCase();
-        if (segA < segB) return -1;
-        if (segA > segB) return 1;
-        
-        let mccA = parseInt(a.mcc) || 0;
-        let mccB = parseInt(b.mcc) || 0;
-        return mccA - mccB;
-    });
-
-    let currentSegment = null;
-    let currentSegmentTd = null;
-
-    sortedList.forEach(item => {
-        const tr = document.createElement('tr');
-        const isRecurring = (item.segment || "").toLowerCase().includes('recurring');
-        const renderCheck = (val, applyRecurring) => {
-            if (val === 'Y') {
-                return applyRecurring ? '✅<br><span class="sp-recurring">recurring<br>only</span>' : '✅';
-            }
-            return '<span class="sp-dash">-</span>';
-        };
-
-        if (item.segment !== currentSegment) {
-            currentSegment = item.segment;
-            
-            const tdSegment = document.createElement('td');
-            tdSegment.className = 'segment-cell';
-            tdSegment.innerHTML = item.segment || '-';
-            
-            currentSegmentTd = tdSegment;
-            tr.appendChild(tdSegment);
-        } else {
-            if (currentSegmentTd) {
-                currentSegmentTd.rowSpan = (currentSegmentTd.rowSpan || 1) + 1;
-            }
-        }
-
-        const restOfRow = document.createElement('template');
-        restOfRow.innerHTML = `
-            <td class="sp-mcc-cell">${item.mcc}</td>
-            <td class="sp-desc-cell" style="font-weight:bold;">${item.name || '-'}</td>
-            <td class="sp-desc-cell">${item.desc || '-'}</td>
-            <td class="sp-desc-cell">${item.industry || '-'}</td>
-            <td class="sp-check-cell">${renderCheck(item.vOn, isRecurring)}</td>
-            <td class="sp-check-cell">${renderCheck(item.vOff, isRecurring)}</td>
-            <td class="sp-check-cell">${renderCheck(item.mOn, isRecurring)}</td>
-            <td class="sp-check-cell">${renderCheck(item.mOff, isRecurring)}</td>
-            <td class="sp-check-cell">${renderCheck(item.uLoc, false)}</td>
-            <td class="sp-check-cell">${renderCheck(item.uInt, false)}</td>
-        `;
-        
-        while(restOfRow.content.firstChild) {
-            tr.appendChild(restOfRow.content.firstChild);
-        }
-        
-        tbody.appendChild(tr);
-    });
-}
-
-function checkSpecialMcc() {
-    let mccInput = document.getElementById('mcc');
-    let val = mccInput.value;
-    let targetMcc = val.includes("Others") ? document.getElementById('other_mcc').value : val.substring(0, 4);
-    
-    const infoBox = document.getElementById('mcc_info_box');
-    
-    if (!targetMcc || targetMcc.length < 4) {
-        setBadge('v', 'grey', false); setBadge('m', 'grey', false); setBadge('u', 'grey', false); 
-        infoBox.style.display = 'none'; 
-        return;
-    }
-
-    let isRecurring = false;
-    let targetObj = specialMccDetailedList.find(obj => obj.mcc === targetMcc);
-    if(targetObj && (targetObj.segment || "").toLowerCase().includes("recurring")) {
-        isRecurring = true;
-    }
-
-    if (specialMccs.v.includes(targetMcc)) setBadge('v', 'special', isRecurring); else setBadge('v', 'normal', false);
-    if (specialMccs.m.includes(targetMcc)) setBadge('m', 'special', isRecurring); else setBadge('m', 'normal', false);
-    if (specialMccs.u.includes(targetMcc)) setBadge('u', 'special', false); else setBadge('u', 'normal', false);
-
-    if (mccDetailsMap[targetMcc]) {
-        document.getElementById('mcc_desc_text').innerText = mccDetailsMap[targetMcc].desc;
-        document.getElementById('mcc_included_text').innerText = mccDetailsMap[targetMcc].included;
-        infoBox.style.display = 'block';
-    } else {
-        infoBox.style.display = 'none';
-    }
-}
-
-function setBadge(brand, state, isRecur) {
-    const el = document.getElementById(`badge_${brand}`);
-    let recTag = isRecur ? '<br><span style="font-size: 8.5px; color: #e53e3e;">(Recurring)</span>' : '';
-    
-    if (state === 'grey') {
-        el.style.background = '#edf2f7'; el.style.color = '#a0aec0'; el.style.borderColor = '#e2e8f0';
-        el.innerHTML = brand === 'v' ? 'Visa' : brand === 'm' ? 'Mastercard' : 'UnionPay';
-    } else if (state === 'special') {
-        if(brand==='v') { el.style.background = '#ebf4ff'; el.style.color = '#1a1f71'; el.style.borderColor = '#90cdf4'; el.innerHTML = 'Visa: Special' + recTag; }
-        if(brand==='m') { el.style.background = '#fffaf0'; el.style.color = '#ff5f00'; el.style.borderColor = '#fbd38d'; el.innerHTML = 'MC: Special' + recTag; }
-        if(brand==='u') { el.style.background = '#e6fffa'; el.style.color = '#007d79'; el.style.borderColor = '#81e6d9'; el.innerHTML = 'CUP: Special'; }
-    } else {
-        el.style.background = '#f7fafc'; el.style.color = '#718096'; el.style.borderColor = '#e2e8f0';
-        el.innerHTML = (brand==='v'?'Visa':brand==='m'?'Mastercard':'UnionPay') + ': Std.';
-    }
-}
-
-function attemptLogin() {
-    const userInput = document.getElementById('login_user');
-    const passInput = document.getElementById('login_pass');
-    const user = userInput.value.trim();
-    const pass = passInput.value.trim();
-    const errObj = document.getElementById('login_error');
-    const btn = document.getElementById('btn_do_login');
-    
-    if(!user || !pass) { errObj.innerText = "Please enter username and password."; errObj.style.display = 'block'; return; }
-    
-    btn.innerText = "Verifying..."; 
-    errObj.style.display = 'none';
-    userInput.disabled = true;
-    passInput.disabled = true;
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
-    btn.style.cursor = 'not-allowed';
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "login", username: user, password: pass })
-    })
-    .then(r => r.json()).then(res => {
-        if(res.status === "success") {
-            currentUser = user;
-            sessionStorage.setItem('calcCurrentUser', user);
-            sessionStorage.setItem('calcLoginTime', Date.now()); 
-            document.getElementById('display_user_name').innerText = currentUser;
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            
-            applyStoredTheme();
-
-            showToast(`Welcome, ${user}!`, "#3182ce");
-            fetchMccs();
-            fetchUpdates(); 
-            
-            setInterval(() => {
-                idleTime++;
-                if (idleTime >= 240 && currentUser) { 
-                    alert("Session expired due to inactivity (4 hours). For security, you have been logged out.");
-                    logout();
-                }
-            }, 60000);
-            document.addEventListener('mousemove', resetIdleTimer);
-            document.addEventListener('keypress', resetIdleTimer);
-
-        } else {
-            errObj.innerText = res.message; errObj.style.display = 'block';
-            btn.innerText = "Log In";
-            userInput.disabled = false;
-            passInput.disabled = false;
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        }
-    }).catch(err => {
-        errObj.innerText = "Connection error."; errObj.style.display = 'block';
-        btn.innerText = "Log In";
-        userInput.disabled = false;
-        passInput.disabled = false;
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-    });
-}
-
-function logout() { 
-    sessionStorage.clear(); 
-    currentUser = null;
-    
-    document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loginModal').style.display = 'flex';
-    
-    document.getElementById('login_user').value = '';
-    document.getElementById('login_pass').value = '';
-    document.getElementById('login_error').style.display = 'none';
-    
-    const btn = document.getElementById('btn_do_login');
-    btn.innerText = "Log In";
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
-    document.getElementById('login_user').disabled = false;
-    document.getElementById('login_pass').disabled = false;
-    
-    document.body.classList.remove('dark-mode');
-    document.getElementById('btn_theme').innerText = '🌙';
-}
-
-let pendingSaveName = "";
-let pendingExistingNames = [];
-
-function saveRecord() {
-    const mName = document.getElementById('merchant_name').value.trim() || 'Merchant';
-    const d = new Date();
-    const defaultName = `${mName}_${("0"+d.getDate()).slice(-2)}${("0"+(d.getMonth()+1)).slice(-2)}${d.getFullYear()}`;
-    
-    let recordName = prompt("Enter a name to save to Cloud:", defaultName);
-    if (!recordName || recordName.trim() === "") return;
-    recordName = recordName.trim();
-
-    setActionState(true, 'btn_cloud_save', 'Checking...');
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "load", username: currentUser })
-    })
-    .then(r => r.json()).then(res => {
-        if(res.status === "success" && res.data.length > 0) {
-            pendingExistingNames = res.data.map(item => item.recordName);
-            if(pendingExistingNames.includes(recordName)) {
-                setActionState(false);
-                pendingSaveName = recordName;
-                document.getElementById('conflict_record_name').innerText = `"${recordName}"`;
-                document.getElementById('saveConflictModal').style.display = 'flex';
-                document.getElementById('new_copy_input_area').style.display = 'none';
-                document.getElementById('conflict_buttons_area').style.display = 'flex';
-                document.getElementById('confirm_new_copy_area').style.display = 'none';
-                return; 
-            }
-        }
-        pendingSaveName = recordName;
-        executeFinalSave('replace'); 
-    }).catch(err => { 
-        setActionState(false);
-        alert("Network Error while checking records."); 
-    });
-}
-
-function closeSaveConflict() { 
-    document.getElementById('saveConflictModal').style.display = 'none'; 
-    setModalButtonsState(false); 
-}
-
-function triggerReplace() { 
-    executeFinalSave('replace'); 
-}
-
-function triggerSaveNewCopy() {
-    let i = 1;
-    while(pendingExistingNames.includes(`${pendingSaveName} (${i})`)) { i++; }
-    document.getElementById('conflict_new_name').value = `${pendingSaveName} (${i})`;
-    document.getElementById('conflict_buttons_area').style.display = 'none';
-    document.getElementById('new_copy_input_area').style.display = 'block';
-    document.getElementById('confirm_new_copy_area').style.display = 'flex';
-    document.getElementById('conflict_new_name').focus();
-}
-
-function executeFinalSave(mode) {
-    let finalName = pendingSaveName;
-    if (mode === 'new') {
-        finalName = document.getElementById('conflict_new_name').value.trim();
-        if (!finalName) return; 
-    }
-
-    setModalButtonsState(true); 
-    setActionState(true, 'btn_cloud_save', 'Saving...');
-
-    const draftData = {
-        basic: {
-            merchant_name: document.getElementById('merchant_name').value, mcc: document.getElementById('mcc').value,
-            other_mcc: document.getElementById('other_mcc').value, currency: document.getElementById('currency').value,
-            ticket_size: document.getElementById('ticket_size').value, model: document.getElementById('model').value,
-            shopify: document.getElementById('shopify').value, fraudsight: document.getElementById('fraudsight').value,
-            _3ds: document.getElementById('3ds').value, token: document.getElementById('token').value,
-            visa_overall: document.getElementById('visa_overall_pct').value, master_overall: document.getElementById('master_overall_pct').value
-        },
-        distributions: {
-            visa: Array.from(document.querySelectorAll('.v-pct')).map(el => el.value),
-            master: Array.from(document.querySelectorAll('.m-pct')).map(el => el.value),
-            up: Array.from(document.querySelectorAll('.u-pct')).map(el => el.value)
-        }
-    };
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "save", username: currentUser, recordName: finalName, data: draftData })
-    }).then(r => r.json()).then(saveRes => {
-        setActionState(false);
-        setModalButtonsState(false);
-        closeSaveConflict();
-        if(saveRes.status === "success") showToast(`☁️ Saved as "${finalName}"`, "#38a169");
-        else alert(saveRes.message);
-    }).catch(err => { 
-        setActionState(false);
-        setModalButtonsState(false);
-        closeSaveConflict();
-        alert("Network Error while saving."); 
-    });
-}
-
-function filterRecords() {
-    let input = document.getElementById('record_search').value.toLowerCase();
-    let groups = document.querySelectorAll('#draftList .draft-group');
-    
-    groups.forEach(group => {
-        let groupTitleText = group.querySelector('.draft-group-title').innerText.toLowerCase();
-        let items = group.querySelectorAll('.draft-item');
-        let hasVisibleItem = false;
-        
-        items.forEach(item => {
-            let name = item.querySelector('.draft-name').innerText.toLowerCase();
-            if (name.includes(input) || groupTitleText.includes(input)) {
-                item.style.display = 'flex';
-                hasVisibleItem = true;
+    // 處理「不受影響」的勾選邏輯
+    function toggleDates(checkbox) {
+        const grid = checkbox.closest('.date-grid');
+        const dates = grid.querySelectorAll('input[type="date"]');
+        dates.forEach(date => {
+            date.disabled = checkbox.checked;
+            if (checkbox.checked) {
+                date.classList.remove('req-input');
+                date.classList.remove('error-border');
             } else {
-                item.style.display = 'none';
+                date.classList.add('req-input');
             }
         });
-        
-        if (hasVisibleItem) {
-            group.style.display = 'block';
-        } else {
-            group.style.display = 'none';
-        }
-    });
-}
+        markDirty();
+    }
 
-function openLoadModal() {
-    setActionState(true, 'btn_cloud_load', 'Loading...');
-    document.getElementById('loadModal').style.display = 'flex';
-    const searchInput = document.getElementById('record_search');
-    if(searchInput) searchInput.value = '';
+    window.onload = () => { addHoliday(); };
 
-    let listEl = document.getElementById('draftList');
-    listEl.innerHTML = '<div style="text-align:center; padding: 20px; color:#a0aec0;">Loading from cloud... ⏳</div>';
-
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "load", username: currentUser })
-    })
-    .then(r => r.json()).then(res => {
-        setActionState(false);
-        listEl.innerHTML = '';
-        if(res.status === "success" && res.data.length > 0) {
-            let records = res.data.reverse();
-            let grouped = {};
-            
-            records.forEach(item => {
-                let mName = "Unknown Merchant";
-                try {
-                    let parsed = JSON.parse(item.jsonData);
-                    if (parsed.basic && parsed.basic.merchant_name) {
-                        mName = parsed.basic.merchant_name.trim() || "Unknown Merchant";
-                    }
-                } catch(e) {}
+    function addHoliday() {
+        holidayCount++;
+        const id = holidayCount;
+        const html = `
+            <div class="holiday-card" id="holiday-${id}">
+                <button class="remove-btn" onclick="removeHoliday(${id})">X 刪除</button>
+                <h3>📅 假期 ${id}</h3>
                 
-                if (!grouped[mName]) grouped[mName] = [];
-                grouped[mName].push(item);
+                <div class="form-group">
+                    <label>假期名稱 (EN)</label>
+                    <input type="text" class="h-name-en req-input" placeholder="e.g. National Day Holiday" value="" oninput="markDirty(); removeError(this);">
+                </div>
+                <div class="form-group">
+                    <label>假期名稱 (ZH)</label>
+                    <input type="text" class="h-name-zh req-input" placeholder="e.g. 國慶日假期" value="" oninput="markDirty(); removeError(this);">
+                </div>
+
+                <div class="date-grid">
+                    <h4>
+                        📱 QR Code Payment
+                        <label class="na-toggle"><input type="checkbox" class="qr-na" onchange="toggleDates(this)"> 不受影響 (Normal Settlement)</label>
+                    </h4>
+                    <div><label>Suspended (暫停)</label><input type="date" class="qr-susp req-input" onchange="markDirty(); removeError(this);"></div>
+                    <div><label>Resume (恢復)</label><input type="date" class="qr-res req-input" onchange="markDirty(); removeError(this);"></div>
+                </div>
+
+                <div class="date-grid">
+                    <h4>
+                        🌐 UnionPay Online Payment (UPOP)
+                        <label class="na-toggle"><input type="checkbox" class="upop-na" onchange="toggleDates(this)"> 不受影響 (Normal Settlement)</label>
+                    </h4>
+                    <div><label>Suspended (暫停)</label><input type="date" class="upop-susp req-input" onchange="markDirty(); removeError(this);"></div>
+                    <div><label>Resume (恢復)</label><input type="date" class="upop-res req-input" onchange="markDirty(); removeError(this);"></div>
+                </div>
+
+                <div class="date-grid">
+                    <h4>
+                        💳 Card Payment
+                        <label class="na-toggle"><input type="checkbox" class="card-na" onchange="toggleDates(this)"> 不受影響 (Normal Settlement)</label>
+                    </h4>
+                    <div><label>Suspended (暫停)</label><input type="date" class="card-susp req-input" onchange="markDirty(); removeError(this);"></div>
+                    <div><label>Resume (恢復)</label><input type="date" class="card-res req-input" onchange="markDirty(); removeError(this);"></div>
+                </div>
+            </div>
+        `;
+        document.getElementById('holidaysContainer').insertAdjacentHTML('beforeend', html);
+        markDirty();
+    }
+
+    function removeHoliday(id) {
+        document.getElementById(`holiday-${id}`).remove();
+        markDirty();
+    }
+
+    function setUIState(disabled) {
+        const inputs = document.querySelectorAll('input:not(.qr-na, .upop-na, .card-na), textarea:not(#htmlOutput), button:not(.copy-btn)');
+        inputs.forEach(el => {
+            // 不要解鎖因為「不受影響」而被禁用的日期框
+            if (!disabled && el.type === 'date') {
+                const grid = el.closest('.date-grid');
+                const checkbox = grid.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) return;
+            }
+            el.disabled = disabled;
+        });
+        
+        // 額外處理 checkbox 的禁用
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.disabled = disabled);
+        
+        const btnGen = document.getElementById('btnGenerate');
+        if (disabled) {
+            btnGen.innerText = "⏳ 正在生成代碼... (Generating...)";
+        } else {
+            btnGen.innerText = "✨ 生成 HTML 代碼 (Generate HTML)";
+        }
+    }
+
+    function validateForm() {
+        let isValid = true;
+        
+        const mainInputs = ['imgUrl', 'subEn', 'subZh', 'contentEn', 'contentZh'];
+        mainInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el.value.trim()) {
+                el.classList.add('error-border');
+                isValid = false;
+            }
+        });
+
+        const holidayCards = document.querySelectorAll('.holiday-card');
+        if (holidayCards.length === 0) {
+            alert("❌ 請至少新增一個假期！(Please add at least one holiday!)");
+            return false;
+        }
+
+        holidayCards.forEach(card => {
+            const reqInputs = card.querySelectorAll('.req-input');
+            reqInputs.forEach(el => {
+                if (!el.value.trim()) {
+                    el.classList.add('error-border');
+                    isValid = false;
+                }
+            });
+        });
+
+        if (!isValid) {
+            alert("❌ 請填寫所有紅色框線的必要資料！\n(Please fill in all required fields!)");
+        }
+
+        return isValid;
+    }
+
+    function generateHTML() {
+        if (!validateForm()) return;
+        setUIState(true);
+
+        setTimeout(() => {
+            const imgUrl = document.getElementById('imgUrl').value.trim();
+            const subEn = document.getElementById('subEn').value.trim();
+            const subZh = document.getElementById('subZh').value.trim();
+            const contentEn = document.getElementById('contentEn').value.trim().replace(/\n/g, '<br>');
+            const contentZh = document.getElementById('contentZh').value.trim().replace(/\n/g, '<br>');
+
+            let cardsHTML = '';
+            const holidayCards = document.querySelectorAll('.holiday-card');
+
+            holidayCards.forEach(card => {
+                const nameEn = card.querySelector('.h-name-en').value.trim();
+                const nameZh = card.querySelector('.h-name-zh').value.trim();
+                
+                const qrNa = card.querySelector('.qr-na').checked;
+                const upopNa = card.querySelector('.upop-na').checked;
+                const cardNa = card.querySelector('.card-na').checked;
+
+                const methods = [
+                    { id: 'qr', icon: 'qr-code.png', nameEn: 'QR Code Payment', nameZh: '(二維碼支付)', desc: '(Alipay / WeChat Pay / PayMe / FPS / UnionPay QR code)', isNa: qrNa, susp: qrNa ? 'NA' : formatDate(card.querySelector('.qr-susp').value), res: qrNa ? 'NA' : formatDate(card.querySelector('.qr-res').value) },
+                    { id: 'upop', icon: 'globe.png', nameEn: 'UnionPay Online Payment', nameZh: '(銀聯在線支付)', desc: '(UPOP)', isNa: upopNa, susp: upopNa ? 'NA' : formatDate(card.querySelector('.upop-susp').value), res: upopNa ? 'NA' : formatDate(card.querySelector('.upop-res').value) },
+                    { id: 'card', icon: 'bank-cards.png', nameEn: 'Card Payment', nameZh: '(信用卡支付)', desc: '(Visa / Mastercard / Offline UnionPay Card)', isNa: cardNa, susp: cardNa ? 'NA' : formatDate(card.querySelector('.card-susp').value), res: cardNa ? 'NA' : formatDate(card.querySelector('.card-res').value) }
+                ];
+
+                const groups = {};
+                methods.forEach(m => {
+                    const key = m.isNa ? 'NA_GROUP' : `${m.susp}|${m.res}`;
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(m);
+                });
+
+                let groupHTML = '';
+                const groupKeys = Object.keys(groups);
+
+                groupKeys.forEach((key, index) => {
+                    const group = groups[key];
+                    const isLastGroup = index === groupKeys.length - 1;
+                    const isNaGroup = key === 'NA_GROUP';
+
+                    let itemsHTML = '';
+                    
+                    if (group.length === 3) {
+                        itemsHTML = `
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                                <tr>
+                                    <td width="28" valign="top" style="padding-top: 2px;"><img src="https://img.icons8.com/ios-filled/24/007bff/select-all.png" alt="All Methods Icon" width="20" height="20" style="display: block;"></td>
+                                    <td>
+                                        <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 20px;">All Payment Methods <span style="font-weight: 500;">(所有支付方式)</span></p>
+                                        <p style="margin: 0; font-size: 12px; font-weight: 400; color: #64748b; line-height: 18px;">(QR Code Payment / UnionPay Online Payment / Card Payment)</p>
+                                    </td>
+                                </tr>
+                            </table>`;
+                    } else {
+                        group.forEach(m => {
+                            itemsHTML += `
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                                    <tr>
+                                        <td width="28" valign="top" style="padding-top: 2px;"><img src="https://img.icons8.com/ios-filled/24/007bff/${m.icon}" alt="Icon" width="20" height="20" style="display: block;"></td>
+                                        <td>
+                                            <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 20px;">${m.nameEn} <span style="font-weight: 500;">${m.nameZh}</span></p>
+                                            <p style="margin: 0; font-size: 12px; font-weight: 400; color: #64748b; line-height: 18px;">${m.desc}</p>
+                                        </td>
+                                    </tr>
+                                </table>`;
+                        });
+                    }
+
+                    if (isNaGroup) {
+                        itemsHTML += `
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                                <tr>
+                                    <td style="padding: 12px 16px;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; margin-right: 8px; vertical-align: middle;"></span>
+                                        <span style="font-size: 14px; color: #166534; vertical-align: middle;"><strong>Normal Settlement (如常出款)</strong></span>
+                                    </td>
+                                </tr>
+                            </table>`;
+                    } else {
+                        itemsHTML += `
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="padding: 12px 16px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding-bottom: 8px;">
+                                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; margin-right: 8px; vertical-align: middle;"></span>
+                                                    <span style="font-size: 14px; color: #475569; vertical-align: middle;"><strong>Suspended (暫停):</strong> ${group[0].susp}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; margin-right: 8px; vertical-align: middle;"></span>
+                                                    <span style="font-size: 14px; color: #475569; vertical-align: middle;"><strong>Resume (恢復):</strong> ${group[0].res}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>`;
+                    }
+
+                    groupHTML += `
+                        <tr>
+                            <td style="padding: ${index === 0 ? '24px' : '16px'} 24px ${isLastGroup ? '24px' : '16px'} 24px;">
+                                ${itemsHTML}
+                            </td>
+                        </tr>
+                    `;
+
+                    if (!isLastGroup) {
+                        groupHTML += `
+                        <tr>
+                            <td style="padding: 0 24px;">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr><td style="border-top: 1px solid #cbd5e1;"></td></tr>
+                                </table>
+                            </td>
+                        </tr>`;
+                    }
+                });
+
+                cardsHTML += `
+                    <tr>
+                        <td align="center" style="padding-bottom: 24px">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; font-family: Inter, 'PingFang HK', Tahoma, sans-serif; overflow: hidden; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                                <tr>
+                                    <td style="background-color: #f8fafc; padding: 16px 24px; border-bottom: 1px solid #e5e7eb;">
+                                        <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">${nameEn} <span style="font-weight: 500; font-size: 15px;">| ${nameZh}</span></p>
+                                    </td>
+                                </tr>
+                                ${groupHTML}
+                            </table>
+                        </td>
+                    </tr>
+                `;
             });
 
-            for (let mName in grouped) {
-                let groupDiv = document.createElement('div');
-                groupDiv.className = 'draft-group';
-                
-                let groupTitle = document.createElement('div');
-                groupTitle.className = 'draft-group-title';
-                groupTitle.innerHTML = `📁 ${mName} <span style="font-size: 11px; font-weight: normal; color: #a0aec0; float: right;">${grouped[mName].length} versions</span>`;
-                groupDiv.appendChild(groupTitle);
-                
-                let groupList = document.createElement('div');
-                groupList.className = 'draft-group-list';
+            // HTML Template Wrapper
+            const finalHTML = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700" rel="stylesheet">
+    <title>Suspending Settlement Notice | 暫停出款通知</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+      table{ border-collapse:separate; border-spacing:0px !important; }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #000000;">
+    <div style="font-size: 0px; line-height: 1px; mso-line-height-rule: exactly; display: none; max-width: 0px; max-height: 0px; opacity: 0; overflow: hidden; mso-hide: all;"></div>
+    <center lang="en" dir="ltr" style="width: 100%; table-layout: fixed; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; background-color: #000000;">
+      <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="600.00" style="width: 600px; border-spacing: 0px !important; font-family: Inter, 'PingFang HK', 'Microsoft YaHei', Tahoma, sans-serif; min-width: 600px; border-collapse: separate; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+          <td>
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100.00%" style="background-color: #f0f0f0; padding-top: 32px; padding-bottom: 32px; width: 100%;">
+              <tr>
+                <td align="center" valign="middle">
+                  <img src="https://i0.wp.com/qfpay.global/wp-content/uploads/2023/10/logo_black.png?w=812&ssl=1" alt="QFPay Logo" width="152" style="width: 152px; display: block; margin: 0 auto;">
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="${imgUrl}" alt="Banner" width="600" style="width: 100%; max-width: 600px; display: block; border: 0;">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" bgcolor="#ffffff" style="background: linear-gradient(225deg, #bae6fd 0%, #e0f2fe 15%, #ffffff 35%, #ffffff 65%, #e0f2fe 85%, #bae6fd 100%); background-color: #ffffff; padding-top: 40px; padding-bottom: 48px;">
+              <tr>
+                <td valign="top" style="padding-left: 32px; padding-right: 32px;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%">
+                    <tr>
+                      <td align="center" style="padding-bottom: 16px;">
+                        <h1 style="font-size: 24px; font-weight: 700; text-align: center; line-height: 32px; color: #1a1a1a; margin: 0; padding: 0; letter-spacing: -0.5px;">
+                          Suspending Settlement During<br>
+                          <span style="color: #007bff;">${subEn}</span><br>
+                          <span style="font-size: 20px; font-weight: 600; color: #1a1a1a; margin-top: 6px; display: inline-block;">
+                            <span style="color: #007bff;">${subZh}</span> 暫停出款通知
+                          </span>
+                        </h1>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom: 24px;">
+                        <table border="0" cellspacing="0" cellpadding="0" style="display:inline-block;">
+                          <tr>
+                            <td style="background-color: #f0f7ff; border-radius: 20px; padding: 8px 16px; border: 1px solid #cce4ff;">
+                              <p style="font-size: 13px; font-weight: 600; color: #007bff; margin: 0; text-align: center;">
+                                ✨ Thank you for choosing QFPay | 感謝您選擇 QFPay
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom: 32px; padding-left: 16px; padding-right: 16px;">
+                        <p style="font-size: 14px; font-weight: 400; text-align: center; line-height: 24px; color: #1a1a1a; margin: 0; padding: 0;">
+                          ${contentEn}<br>
+                          <span style="color: #475569;">${contentZh}</span>
+                        </p>
+                      </td>
+                    </tr>
+                    ${cardsHTML}
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="border-top: 2px solid #000000; background-color: #f0f0f0;">
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100.00%" style="background-color: #f0f0f0;padding-top: 40px;padding-bottom: 16px;width: 100%;">
+              <tr>
+                <td align="left" valign="middle" style="padding-left: 31px; padding-right: 31px;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%">
+                    <tr>
+                      <td align="left" style="padding-bottom: 16px;">
+                        <img src="https://i0.wp.com/qfpay.global/wp-content/uploads/2023/10/logo_black.png?w=812&ssl=1" alt="QFPay text" width="113" style="display: block;">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%">
+                          <tr>
+                            <td valign="top" width="55%">
+                              <p style="text-align: left; margin: 0; padding: 0;">
+                                <span style="font-size: 13px; font-weight: 600; color: #1a1a1a;">©${new Date().getFullYear()} QFPay Haojin Fintech Limited</span><br>
+                                <span style="font-size: 13px; font-weight: 400; color: #1a1a1a; line-height: 18px;">Unit A, 27/F, West Gate Tower<br>7 Wing Hong Street, Lai Chi Kok <br>Kowloon, Hong Kong</span>
+                              </p>
+                            </td>
+                            <td valign="bottom" width="45%" align="right">
+                              <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                                <tr>
+                                  <td align="right" style="padding-bottom: 6px;">
+                                    <a href="https://qfpay.global/documents/privacy-policy/" target="_blank" style="font-size: 13px; color: #1a1a1a; text-decoration: underline;">Privacy Policy | 隱私政策</a>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td align="right" style="padding-bottom: 6px;">
+                                    <a href="https://qfpay.global/documents/terms-of-use/" target="_blank" style="font-size: 13px; color: #1a1a1a; text-decoration: underline;">Terms & Conditions | 服務條款</a>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td align="right">
+                                    <a href="https://qfpay.global/contact-us/" target="_blank" style="font-size: 13px; color: #1a1a1a; text-decoration: underline;">Contact Us | 聯絡我們</a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #f0f0f0;">
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100.00%" style="background-color: #f0f0f0;padding-top: 10px;padding-bottom: 40px;">
+              <tr>
+                <td align="left" valign="middle" style="padding-left: 31px; padding-right: 31px;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%">
+                    <tr>
+                      <td valign="middle" align="left">
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td style="padding-right: 12px;">
+                              <a href="https://www.instagram.com/qfpay_hong_kong/" target="_blank"><img src="https://img-hk.qfapi.com/images/edm/mms/0.1/instagram_icon.png" alt="Instagram" width="20" height="20" style="display: block"></a>
+                            </td>
+                            <td style="padding-right: 12px;">
+                              <a href="https://www.facebook.com/QFPay.Global/" target="_blank"><img src="https://img-hk.qfapi.com/images/edm/mms/0.1/facebook_icon.png" alt="Facebook" width="20" height="20" style="display: block"></a>
+                            </td>
+                            <td>
+                              <a href="https://www.linkedin.com/company/qfpay-hk/posts/?feedView=all" target="_blank"><img src="https://img-hk.qfapi.com/images/edm/new_refund/0.1/linkedin.png" alt="LinkedIn" width="20" height="20" style="display: block"></a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td valign="middle" align="right">
+                        <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td style="padding-right: 10px;">
+                              <a href="https://apps.apple.com/cn/app/hao-jin/id1208883606?l=en" target="_blank"><img src="https://img-hk.qfapi.com/images/edm/mms/0.1/Apple_Store_HD.png" alt="App Store" width="82.5" style="display: block;"></a>
+                            </td>
+                            <td>
+                              <a href="https://play.google.com/store/apps/details?id=in.haojin.nearbymerchant.oversea&pli=1" target="_blank"><img src="https://img-hk.qfapi.com/images/edm/mms/0.1/Google_Play_HD.png" alt="Google Play" width="93.5" style="display: block;"></a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </center>
+  </body>
+</html>`;
 
-                grouped[mName].forEach(item => {
-                    let li = document.createElement('div'); 
-                    li.className = 'draft-item';
-                    
-                    let infoDiv = document.createElement('div'); 
-                    infoDiv.className = 'draft-name';
-                    infoDiv.onclick = () => loadSpecificRecord(item.recordName, item.jsonData);
-                    infoDiv.innerHTML = `${item.recordName} <span class="draft-date">${item.timestamp}</span>`;
-                    
-                    let delBtn = document.createElement('button'); 
-                    delBtn.className = 'btn-delete-draft'; 
-                    delBtn.innerText = 'Delete';
-                    delBtn.onclick = (e) => { 
-                        e.stopPropagation(); 
-                        deleteRecord(item.recordName); 
-                    };
-                    
-                    li.appendChild(infoDiv); 
-                    li.appendChild(delBtn);
-                    groupList.appendChild(li);
-                });
-                
-                groupDiv.appendChild(groupList);
-                listEl.appendChild(groupDiv);
-            }
-        } else {
-            listEl.innerHTML = '<div style="text-align:center; padding: 20px; color:#a0aec0;">No saved records found.</div>';
-        }
-    }).catch(err => { 
-        setActionState(false);
-        listEl.innerHTML = '<div style="text-align:center; color:red;">Failed to load.</div>'; 
-    });
-}
-
-function loadSpecificRecord(name, draftStr) {
-    try {
-        const draft = JSON.parse(draftStr);
-        document.getElementById('merchant_name').value = draft.basic.merchant_name || '';
-        document.getElementById('mcc').value = draft.basic.mcc || ''; document.getElementById('other_mcc').value = draft.basic.other_mcc || '';
-        document.getElementById('currency').value = draft.basic.currency || 'HKD'; document.getElementById('ticket_size').value = draft.basic.ticket_size || '';
-        document.getElementById('model').value = draft.basic.model || ''; 
-        document.getElementById('shopify').value = draft.basic.shopify || '';
-        document.getElementById('fraudsight').value = draft.basic.fraudsight || 'Y'; document.getElementById('3ds').value = draft.basic._3ds || 'Y';
-        document.getElementById('token').value = draft.basic.token || 'N';
-        document.getElementById('visa_overall_pct').value = draft.basic.visa_overall || '50'; document.getElementById('master_overall_pct').value = draft.basic.master_overall || '50';
-
-        const vInputs = document.querySelectorAll('.v-pct'); if(draft.distributions.visa) draft.distributions.visa.forEach((val, i) => { if(vInputs[i]) vInputs[i].value = val; });
-        const mInputs = document.querySelectorAll('.m-pct'); if(draft.distributions.master) draft.distributions.master.forEach((val, i) => { if(mInputs[i]) mInputs[i].value = val; });
-        const uInputs = document.querySelectorAll('.u-pct'); if(draft.distributions.up) draft.distributions.up.forEach((val, i) => { if(uInputs[i]) uInputs[i].value = val; });
-
-        toggleOtherMcc(); checkEmptyFields(); checkSpecialMcc(); calcVisa(); calcMaster(); calcUP(); calcOverall();
-        toggleShopify(); 
-        markResultStale(); 
-        closeLoadModal(); 
-        showToast(`☁️ Record loaded!`, "#3182ce");
-
-        setTimeout(() => { submitCalculation(); }, 300);
-
-    } catch(e) { alert("Data parsing error"); }
-}
-
-function deleteRecord(recordName) {
-    if(!confirm(`Delete cloud record "${recordName}"?`)) return;
-    fetch(API_URL, {
-        method: 'POST',
-        headers: supabaseHeaders,
-        body: JSON.stringify({ action: "delete", username: currentUser, recordName: recordName })
-    }).then(r => r.json()).then(res => {
-        if(res.status === "success") { showToast(`🗑️ Deleted.`, "#e53e3e"); openLoadModal(); }
-    });
-}
-
-function closeLoadModal() { 
-    document.getElementById('loadModal').style.display = 'none'; 
-    setActionState(false);
-}
-
-// 🔥 修正：無縫重置，不會再閃現 Login Page
-function resetForm() { 
-    if(!confirm("Clear all fields?")) return;
-    
-    document.getElementById('merchant_name').value = '';
-    document.getElementById('mcc').value = '';
-    document.getElementById('other_mcc').value = '';
-    document.getElementById('ticket_size').value = '';
-    document.getElementById('model').value = '';
-    document.getElementById('shopify').value = '';
-    document.getElementById('currency').value = 'HKD';
-    document.getElementById('fraudsight').value = 'Y';
-    document.getElementById('3ds').value = 'Y';
-    document.getElementById('token').value = 'N';
-    
-    document.getElementById('visa_overall_pct').value = '50';
-    document.getElementById('master_overall_pct').value = '50';
-    document.querySelectorAll('.v-pct, .m-pct, .u-pct').forEach(el => el.value = '0');
-    
-    toggleOtherMcc();
-    checkEmptyFields();
-    checkSpecialMcc();
-    calcVisa(); calcMaster(); calcUP(); calcOverall();
-    toggleShopify();
-    markResultStale();
-    
-    const setSectionGray = (prefix) => {
-        const cells = document.querySelectorAll(`[id^="${prefix}"]`);
-        cells.forEach(el => { el.innerText = "-"; el.style.opacity = "0.2"; });
-    };
-    setSectionGray('visa_'); setSectionGray('master_'); setSectionGray('up_'); setSectionGray('upqp_');
-    setSectionGray('weighted_'); setSectionGray('higher_');
-    
-    window.scrollTo(0, 0);
-    showToast("Form reset successful! 🧹", "#3182ce");
-}
-
-function showToast(message, bgColor = "#333333") {
-    const t = document.getElementById("toast"); t.innerText = message; t.style.backgroundColor = bgColor;
-    t.className = "show"; setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-}
-
-function checkEmptyFields() { 
-    document.querySelectorAll('.basic-info-field').forEach(f => { 
-        if(!f.value && !f.disabled) f.classList.add('empty-field'); 
-        else f.classList.remove('empty-field'); 
-    }); 
-}
-
-document.querySelectorAll('.basic-info-field').forEach(f => { 
-    f.addEventListener('change', checkEmptyFields); 
-    f.addEventListener('input', checkEmptyFields); 
-});
-
-function toggleOtherMcc() {
-    const m = document.getElementById('mcc').value, og = document.getElementById('other_mcc_group'), oi = document.getElementById('other_mcc');
-    if (m.includes('Others')) { og.style.display = 'block'; oi.classList.add('basic-info-field'); } 
-    else { og.style.display = 'none'; oi.value = ''; oi.classList.remove('basic-info-field'); oi.classList.remove('empty-field'); }
-    checkEmptyFields();
-}
-
-function toggleShopify() {
-    const modelObj = document.getElementById('model');
-    const shopifyObj = document.getElementById('shopify');
-    
-    if (modelObj.value === "Online") {
-        shopifyObj.disabled = false;
-    } else if (modelObj.value === "Offline") {
-        shopifyObj.value = "N";
-        shopifyObj.disabled = true;
-    } else {
-        shopifyObj.value = "";
-        shopifyObj.disabled = true;
-    }
-    shopifyObj.style.backgroundColor = ""; 
-    checkEmptyFields();
-}
-
-function formatCurrency(i) { if(i.value) i.value = parseFloat(i.value).toFixed(2); }
-
-function fillZero(e) { 
-    if(e.value === "" || parseFloat(e.value) < 0) {
-        e.value = "0"; 
-        e.dispatchEvent(new Event('input')); 
-    }
-}
-
-function calcOverall() { 
-    let v = parseFloat(document.getElementById('visa_overall_pct').value)||0; let m = parseFloat(document.getElementById('master_overall_pct').value)||0; 
-    document.getElementById('overall_error').style.display = (v+m!==100)?'block':'none'; 
-}
-
-function calcSum(c, tId, eId) { 
-    let inputs = document.getElementsByClassName(c);
-    let sum = 0; 
-    for(let j=0; j<inputs.length; j++) { sum += parseFloat(inputs[j].value) || 0; }
-    let totalSpan = document.getElementById(tId); 
-    if(totalSpan) { 
-        totalSpan.innerText = sum + " %"; 
-        const isDark = document.body.classList.contains('dark-mode');
-        const defaultColor = isDark ? '#e2e8f0' : '#2d3748';
-        const errorColor = isDark ? '#fc8181' : '#e53e3e';
-        totalSpan.style.color = (sum !== 100) ? errorColor : defaultColor; 
-    }
-    let errSpan = document.getElementById(eId);
-    if(errSpan) { errSpan.style.display = (sum !== 100) ? 'block' : 'none'; }
-}
-
-function calcVisa() { calcSum('v-pct', 'visa_total', 'visa_error'); } 
-function calcMaster() { calcSum('m-pct', 'master_total', 'master_error'); }
-function calcUP() { calcSum('u-pct', 'up_total', 'up_error'); }
-
-toggleOtherMcc(); checkEmptyFields(); calcVisa(); calcMaster(); calcUP(); calcOverall();
-
-function submitCalculation() {
-    checkEmptyFields();
-    const emptyFields = document.querySelectorAll('.empty-field');
-    if (emptyFields.length > 0) { 
-        alert("Please fill in all required fields highlighted in yellow.\n(Make sure Merchant Name, MCC, and Ticket Size are also filled!)"); 
-        return; 
-    }
-
-    document.querySelectorAll('.v-pct, .m-pct, .u-pct, .overall-pct').forEach(el => { if(el.value === "") el.value = "0"; });
-
-    let vSum = 0; document.querySelectorAll('.v-pct').forEach(e=>vSum+=parseFloat(e.value)||0);
-    let mSum = 0; document.querySelectorAll('.m-pct').forEach(e=>mSum+=parseFloat(e.value)||0);
-    let uSum = 0; document.querySelectorAll('.u-pct').forEach(e=>uSum+=parseFloat(e.value)||0);
-    let oSum = (parseFloat(document.getElementById('visa_overall_pct').value)||0) + (parseFloat(document.getElementById('master_overall_pct').value)||0);
-
-    const vValid = vSum === 100;
-    const mValid = mSum === 100;
-    const uValid = uSum === 100;
-    const oValid = oSum === 100;
-
-    if (!vValid && !mValid && !uValid) {
-        alert("Please accurately fill in the distribution (100%) for at least one card to calculate.");
-        return;
-    }
-
-    setActionState(true, 'btn_calc', 'Calculating...');
-
-    const requestData = {
-        action: "calculate", 
-        mcc: document.getElementById('mcc').value, otherMcc: document.getElementById('other_mcc').value, 
-        model: document.getElementById('model').value, currency: document.getElementById('currency').value,
-        shopify: document.getElementById('shopify').value, fraudsight: document.getElementById('fraudsight').value,
-        _3ds: document.getElementById('3ds').value, tokenisation: document.getElementById('token').value,
-        
-        v_l_c: document.getElementsByClassName('v-pct')[0].value, v_l_p: document.getElementsByClassName('v-pct')[1].value, v_l_s: document.getElementsByClassName('v-pct')[2].value,
-        v_i_c: document.getElementsByClassName('v-pct')[3].value, v_i_p: document.getElementsByClassName('v-pct')[4].value, v_i_s: document.getElementsByClassName('v-pct')[5].value, v_i_e: document.getElementsByClassName('v-pct')[6].value,
-        
-        m_l_c: document.getElementsByClassName('m-pct')[0].value, m_l_p: document.getElementsByClassName('m-pct')[1].value, m_l_s: document.getElementsByClassName('m-pct')[2].value,
-        m_i_c: document.getElementsByClassName('m-pct')[3].value, m_i_p: document.getElementsByClassName('m-pct')[4].value, m_i_s: document.getElementsByClassName('m-pct')[5].value, m_i_e: document.getElementsByClassName('m-pct')[6].value,
-
-        u_l_c: document.getElementsByClassName('u-pct')[0].value, u_l_p: document.getElementsByClassName('u-pct')[1].value, u_l_s: document.getElementsByClassName('u-pct')[2].value,
-        u_i_c: document.getElementsByClassName('u-pct')[3].value, u_i_p: document.getElementsByClassName('u-pct')[4].value, u_i_s: document.getElementsByClassName('u-pct')[5].value,
-    };
-
-    fetch(API_URL, { 
-        method: 'POST', 
-        headers: supabaseHeaders,
-        body: JSON.stringify(requestData) 
-    })
-    .then(r => r.json()).then(res => {
-        setActionState(false);
-        if (res.status === "success") { 
-            document.getElementById('tables_container').classList.remove('stale-result');
+            // 輸出 HTML
+            document.getElementById('htmlOutput').value = finalHTML;
+            document.getElementById('outputArea').style.display = 'block';
+            document.body.classList.remove('is-dirty');
             
-            document.querySelectorAll('.val').forEach(el => { el.style.opacity = "1"; });
+            // 寫入 Iframe 進行預覽
+            const iframe = document.getElementById('previewFrame');
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(finalHTML);
+            doc.close();
 
-            const d = res.data;
-            const tSize = parseFloat(document.getElementById('ticket_size').value) || 0;
-            const isShopify = (document.getElementById('model').value === 'Online' && document.getElementById('shopify').value === 'Y');
-            const shopifyFee = isShopify ? 0.003 : 0;
+            setUIState(false);
+            document.getElementById('outputArea').scrollIntoView({ behavior: 'smooth' });
 
-            if(d.v_l_tot > 0) d.v_l_pct += shopifyFee;
-            if(d.v_i_tot > 0) d.v_i_pct += shopifyFee;
-            if(d.m_l_tot > 0) d.m_l_pct += shopifyFee;
-            if(d.m_i_tot > 0) d.m_i_pct += shopifyFee;
-            if(d.up_l_tot > 0) { d.up_l_pct += shopifyFee; d.upqp_l_mpqr_pct += shopifyFee; d.upqp_l_cpqr_pct += shopifyFee; }
-            if(d.up_i_tot > 0) { d.up_i_pct += shopifyFee; d.upqp_i_pct += shopifyFee; }
+        }, 400); 
+    }
 
-            const calcCvr = (pct, fix) => (tSize > 0 && pct > 0) ? ((fix/tSize) + pct) : 0;
-            const cleanFloat = (num) => Number(num.toPrecision(14));
-            const exactRound = (num) => +(Math.round(cleanFloat(num) + "e+2")  + "e-2");
-            const fmtP = (val) => val > 0 ? exactRound(val * 100).toFixed(2) + "%" : "-";
-            const fmtF = (val) => val > 0 ? "$" + exactRound(val).toFixed(2) : "-";
-
-            // Visa
-            document.getElementById('visa_local_pct').innerText = fmtP(d.v_l_pct); document.getElementById('visa_local_fix').innerText = fmtF(d.v_l_fix); document.getElementById('visa_local_cvr').innerText = fmtP(calcCvr(d.v_l_pct, d.v_l_fix));
-            document.getElementById('visa_int_pct').innerText = fmtP(d.v_i_pct); document.getElementById('visa_int_fix').innerText = fmtF(d.v_i_fix); document.getElementById('visa_int_cvr').innerText = fmtP(calcCvr(d.v_i_pct, d.v_i_fix));
-            let v_cmb_pct=0, v_cmb_fix=0; if(d.v_l_tot+d.v_i_tot > 0) { v_cmb_pct=(d.v_l_pct*d.v_l_tot+d.v_i_pct*d.v_i_tot)/(d.v_l_tot+d.v_i_tot); v_cmb_fix=(d.v_l_fix*d.v_l_tot+d.v_i_fix*d.v_i_tot)/(d.v_l_tot+d.v_i_tot); }
-            document.getElementById('visa_cmb_pct').innerText = fmtP(v_cmb_pct); document.getElementById('visa_cmb_fix').innerText = fmtF(v_cmb_fix); document.getElementById('visa_cmb_cvr').innerText = fmtP(calcCvr(v_cmb_pct, v_cmb_fix));
-
-            // Mastercard
-            document.getElementById('master_local_pct').innerText = fmtP(d.m_l_pct); document.getElementById('master_local_fix').innerText = fmtF(d.m_l_fix); document.getElementById('master_local_cvr').innerText = fmtP(calcCvr(d.m_l_pct, d.m_l_fix));
-            document.getElementById('master_int_pct').innerText = fmtP(d.m_i_pct); document.getElementById('master_int_fix').innerText = fmtF(d.m_i_fix); document.getElementById('master_int_cvr').innerText = fmtP(calcCvr(d.m_i_pct, d.m_i_fix));
-            let m_cmb_pct=0, m_cmb_fix=0; if(d.m_l_tot+d.m_i_tot > 0) { m_cmb_pct=(d.m_l_pct*d.m_l_tot+d.m_i_pct*d.m_i_tot)/(d.m_l_tot+d.m_i_tot); m_cmb_fix=(d.m_l_fix*d.m_l_tot+d.m_i_fix*d.m_i_tot)/(d.m_l_tot+d.m_i_tot); }
-            document.getElementById('master_cmb_pct').innerText = fmtP(m_cmb_pct); document.getElementById('master_cmb_fix').innerText = fmtF(m_cmb_fix); document.getElementById('master_cmb_cvr').innerText = fmtP(calcCvr(m_cmb_pct, m_cmb_fix));
-
-            // UnionPay
-            document.getElementById('up_local_pct').innerText = fmtP(d.up_l_pct); document.getElementById('up_local_fix').innerText = fmtF(d.up_l_fix); document.getElementById('up_local_cvr').innerText = fmtP(calcCvr(d.up_l_pct, d.up_l_fix));
-            document.getElementById('up_int_pct').innerText = fmtP(d.up_i_pct); document.getElementById('up_int_fix').innerText = fmtF(d.up_i_fix); document.getElementById('up_int_cvr').innerText = fmtP(calcCvr(d.up_i_pct, d.up_i_fix));
-            let u_cmb_pct=0, u_cmb_fix=0; if(d.up_l_tot+d.up_i_tot > 0) { u_cmb_pct=(d.up_l_pct*d.up_l_tot+d.up_i_pct*d.up_i_tot)/(d.up_l_tot+d.up_i_tot); u_cmb_fix=(d.up_l_fix*d.up_l_tot+d.up_i_fix*d.up_i_tot)/(d.up_l_tot+d.up_i_tot); }
-            document.getElementById('up_cmb_pct').innerText = fmtP(u_cmb_pct); document.getElementById('up_cmb_fix').innerText = fmtF(u_cmb_fix); document.getElementById('up_cmb_cvr').innerText = fmtP(calcCvr(u_cmb_pct, u_cmb_fix));
-
-            // UnionPay QuickPass
-            document.getElementById('upqp_local_mpqr_pct').innerText = fmtP(d.upqp_l_mpqr_pct); document.getElementById('upqp_local_mpqr_fix').innerText = fmtF(d.upqp_l_mpqr_fix); document.getElementById('upqp_local_mpqr_cvr').innerText = fmtP(calcCvr(d.upqp_l_mpqr_pct, d.upqp_l_mpqr_fix));
-            document.getElementById('upqp_local_cpqr_pct').innerText = fmtP(d.upqp_l_cpqr_pct); document.getElementById('upqp_local_cpqr_fix').innerText = fmtF(d.upqp_l_cpqr_fix); document.getElementById('upqp_local_cpqr_cvr').innerText = fmtP(calcCvr(d.upqp_l_cpqr_pct, d.upqp_l_cpqr_fix));
-            document.getElementById('upqp_int_pct').innerText = fmtP(d.upqp_i_pct); document.getElementById('upqp_int_fix').innerText = fmtF(d.upqp_i_fix); document.getElementById('upqp_int_cvr').innerText = fmtP(calcCvr(d.upqp_i_pct, d.upqp_i_fix));
-
-            // Weighted Average
-            let v_oa = parseFloat(document.getElementById('visa_overall_pct').value)/100 || 0;
-            let m_oa = parseFloat(document.getElementById('master_overall_pct').value)/100 || 0;
-            let w_l_pct = (d.v_l_pct*v_oa + d.m_l_pct*m_oa) / (v_oa+m_oa); let w_l_fix = (d.v_l_fix*v_oa + d.m_l_fix*m_oa) / (v_oa+m_oa);
-            document.getElementById('weighted_local_pct').innerText = fmtP(w_l_pct); document.getElementById('weighted_local_fix').innerText = fmtF(w_l_fix); document.getElementById('weighted_local_cvr').innerText = fmtP(calcCvr(w_l_pct, w_l_fix));
-            let w_i_pct = (d.v_i_pct*v_oa + d.m_i_pct*m_oa) / (v_oa+m_oa); let w_i_fix = (d.v_i_fix*v_oa + d.m_i_fix*m_oa) / (v_oa+m_oa);
-            document.getElementById('weighted_int_pct').innerText = fmtP(w_i_pct); document.getElementById('weighted_int_fix').innerText = fmtF(w_i_fix); document.getElementById('weighted_int_cvr').innerText = fmtP(calcCvr(w_i_pct, w_i_fix));
-            let w_cmb_pct = (v_cmb_pct*v_oa + m_cmb_pct*m_oa) / (v_oa+m_oa); let w_cmb_fix = (v_cmb_fix*v_oa + m_cmb_fix*m_oa) / (v_oa+m_oa);
-            document.getElementById('weighted_cmb_pct').innerText = fmtP(w_cmb_pct); document.getElementById('weighted_cmb_fix').innerText = fmtF(w_cmb_fix); document.getElementById('weighted_cmb_cvr').innerText = fmtP(calcCvr(w_cmb_pct, w_cmb_fix));
-
-            // Higher
-            document.getElementById('higher_local_pct').innerText = fmtP(Math.max(d.v_l_pct, d.m_l_pct)); document.getElementById('higher_local_fix').innerText = fmtF(Math.max(d.v_l_fix, d.m_l_fix)); document.getElementById('higher_local_cvr').innerText = fmtP(calcCvr(Math.max(d.v_l_pct, d.m_l_pct), Math.max(d.v_l_fix, d.m_l_fix)));
-            document.getElementById('higher_int_pct').innerText = fmtP(Math.max(d.v_i_pct, d.m_i_pct)); document.getElementById('higher_int_fix').innerText = fmtF(Math.max(d.v_i_fix, d.m_i_fix)); document.getElementById('higher_int_cvr').innerText = fmtP(calcCvr(Math.max(d.v_i_pct, d.m_i_pct), Math.max(d.v_i_fix, d.m_i_fix)));
-            document.getElementById('higher_cmb_pct').innerText = fmtP(Math.max(v_cmb_pct, m_cmb_pct)); document.getElementById('higher_cmb_fix').innerText = fmtF(Math.max(v_cmb_fix, m_cmb_fix)); document.getElementById('higher_cmb_cvr').innerText = fmtP(calcCvr(Math.max(v_cmb_pct, m_cmb_pct), Math.max(v_cmb_fix, m_cmb_fix)));
-
-            const setSectionGray = (prefix) => {
-                const cells = document.querySelectorAll(`[id^="${prefix}"]`);
-                cells.forEach(el => { 
-                    el.innerText = "-"; 
-                    el.style.opacity = "0.2"; 
-                });
-            };
-
-            if (!vValid) setSectionGray('visa_');
-            if (!mValid) setSectionGray('master_');
-            if (!uValid) { setSectionGray('up_'); setSectionGray('upqp_'); }
-            if (!vValid || !mValid || !oValid) { setSectionGray('weighted_'); setSectionGray('higher_'); }
-
-            showToast("Calculation Complete! 📊", "#38a169");
-        } 
-        else { alert("Backend error:\n" + res.message); }
-    }).catch(err => { setActionState(false); alert("Network connection failed."); });
-}
+    function copyHTML() {
+        const copyText = document.getElementById("htmlOutput");
+        copyText.select();
+        copyText.setSelectionRange(0, 999999);
+        document.execCommand("copy");
+        alert("✅ 代碼已成功複製到剪貼簿！(Copied to clipboard)");
+    }
 </script>
+
 </body>
 </html>
